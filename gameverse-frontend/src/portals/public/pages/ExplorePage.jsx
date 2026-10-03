@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { ExploreHeader } from '../components/explore/ExploreHeader';
 import { QuickStatusFilters } from '../components/explore/QuickStatusFilters';
 import { TournamentFilters } from '../components/explore/TournamentFilters';
@@ -29,7 +28,7 @@ export function ExplorePage() {
   // Let's use standard query but we are replacing data. The spec allowed either.
 
   return (
-    <AuroraBackground showRadialGradient={true}>
+    <>
       <div className="container mx-auto px-4 py-8 lg:py-12 min-h-screen flex flex-col">
         
         <ExploreHeader 
@@ -138,6 +137,6 @@ export function ExplorePage() {
           </>
         )}
       </AnimatePresence>
-    </AuroraBackground>
+    </>
   );
 }

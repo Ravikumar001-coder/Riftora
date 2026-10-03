@@ -22,8 +22,6 @@ import { PlayerSpotlight } from '../../../components/landing/PlayerSpotlight';
 import { SupportedGames } from '../../../components/landing/SupportedGames';
 import { CallToAction } from '../../../components/landing/CallToAction';
 import { TeamCaptainWorkflow } from '../../../components/landing/TeamCaptainWorkflow';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
-
 export function HomePage() {
   useEffect(() => {
     if (window.location.hash) {
@@ -44,7 +42,7 @@ export function HomePage() {
   }, []);
 
   return (
-    <AuroraBackground>
+    <>
       <div className="flex flex-col relative">
         <HeroSection />
         <PlatformStats />
@@ -82,6 +80,6 @@ export function HomePage() {
         <SupportedGames />
         <CallToAction />
       </div>
-    </AuroraBackground>
+    </>
   );
 }

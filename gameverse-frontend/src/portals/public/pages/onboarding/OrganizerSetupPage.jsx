@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthGuard } from '../../../../features/auth/components/AuthGuard';
-import { AuroraBackground } from '../../../../components/ui/aurora-background';
 import { useAuthStore } from '../../../../store/authStore';
 import { OrganizerSetupForm } from '../../../../features/onboarding/components/OrganizerSetupForm';
 import logo from '../../../../assets/logo.png';
@@ -18,6 +17,8 @@ export function OrganizerSetupPage() {
 
     // Validating Onboarding State
     if (user) {
+      const hasOrgRoles = (user.orgRoles && user.orgRoles.length > 0) || (user.org_roles && user.org_roles.length > 0);
+      
       if (!user.username) {
         navigate('/onboarding/username', { replace: true });
         return;
@@ -26,9 +27,9 @@ export function OrganizerSetupPage() {
         navigate('/dashboard', { replace: true });
         return;
       }
-      if (user.onboarding_completed || (user.org_roles && user.org_roles.length > 0)) {
-        // Automatically forward to their dashboard if they are fully done or have roles
-        navigate('/dashboard', { replace: true });
+      if (user.onboarding_completed && hasOrgRoles) {
+        // Automatically forward to their dashboard if they are fully done AND have roles
+        navigate('/dashboard/organizer', { replace: true });
       }
     }
   }, [user, navigate]);
@@ -40,14 +41,16 @@ export function OrganizerSetupPage() {
     }
   };
 
+  const hasOrgRoles = (user?.orgRoles && user.orgRoles.length > 0) || (user?.org_roles && user.org_roles.length > 0);
+  
   // Prevent UI flashing
-  if (!user || !user.username || user.onboarding_path !== 'organizer' || user.onboarding_completed || (user.org_roles && user.org_roles.length > 0)) {
+  if (!user || !user.username || user.onboarding_path !== 'organizer' || (user.onboarding_completed && hasOrgRoles)) {
     return null;
   }
 
   return (
     <AuthGuard requireAuth={true}>
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col relative z-10 px-6 sm:px-12 py-8">
           
           {/* Header */}
@@ -103,7 +106,7 @@ export function OrganizerSetupPage() {
             © {new Date().getFullYear()} Riftora Esports. All rights reserved.
           </footer>
         </div>
-      </AuroraBackground>
+      </>
     </AuthGuard>
   );
 }

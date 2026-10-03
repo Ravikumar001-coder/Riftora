@@ -45,7 +45,7 @@ export function TournamentSchedulePreview({ tournament }) {
               </div>
               <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-3 rounded-lg border border-white/5 bg-white/5 group-hover:border-blue-500/30 transition-colors">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="font-bold text-white text-sm">{match.title}</div>
+                  <div className="font-bold text-white text-sm">{match.stage} - {match.matchNumber ? `Match ${match.matchNumber}` : match.round}</div>
                   <div className={`text-xs font-bold px-2 py-0.5 rounded ${
                     isCompleted ? 'bg-slate-800 text-slate-400' :
                     isInProgress ? 'bg-red-500/20 text-red-400' :
@@ -57,7 +57,7 @@ export function TournamentSchedulePreview({ tournament }) {
                 <div className="text-xs text-slate-400 mb-2">{match.round}</div>
                 <div className="text-xs text-slate-500 flex items-center gap-1">
                   <CalendarDays className="w-3 h-3" />
-                  {new Date(match.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  {new Date(match.scheduledTime || match.date || match.scheduledStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </div>
               </div>
             </div>

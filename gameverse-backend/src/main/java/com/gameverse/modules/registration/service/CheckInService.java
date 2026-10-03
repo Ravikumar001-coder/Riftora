@@ -84,7 +84,7 @@ public class CheckInService {
         boolean isOpen = tournament.getStatus() == Tournament.TournamentStatus.check_in;
         Long minsToDeadline = null;
         if (isOpen && tournament.getCheckinCloseMins() != null) {
-            LocalDateTime closeTime = tournament.getStartDate().atStartOfDay()
+            LocalDateTime closeTime = tournament.getStartDate()
                     .minusMinutes(tournament.getCheckinCloseMins());
             minsToDeadline = ChronoUnit.MINUTES.between(LocalDateTime.now(), closeTime);
         }

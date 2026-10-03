@@ -15,4 +15,7 @@ public interface TournamentStaffRepository extends JpaRepository<TournamentStaff
     
     Optional<TournamentStaff> findByTournament_TournamentIdAndUser_UserIdAndStaffRole(
             String tournamentId, String userId, TournamentStaff.StaffRole role);
+
+    Optional<TournamentStaff> findByTournament_TournamentIdAndUser_UserId(
+            String tournamentId, String userId);
 }

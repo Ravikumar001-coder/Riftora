@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Eye, EyeOff, Save, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../../services/api';
 
 export function CredentialInputForm({ matchId, tournamentId, game, onCredentialSaved }) {
   const [roomId, setRoomId] = useState('');
@@ -52,10 +52,9 @@ export function CredentialInputForm({ matchId, tournamentId, game, onCredentialS
         matchStartMinusXMinutes: releaseMode === 'match_start_minus_x' ? matchStartMinusXMinutes : null
       };
 
-      const response = await axios.post(
-        'http://localhost:8081/v1/credentials',
-        payload,
-        { withCredentials: true }
+      const response = await api.post(
+        '/credentials',
+        payload
       );
       
       setRoomId('');

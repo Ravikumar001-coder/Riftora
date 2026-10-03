@@ -13,4 +13,8 @@ public class OnboardingRequest {
 
     @NotBlank(message = "Onboarding path is required")
     private String onboardingPath;
+
+    private String bio;
+    
+    private String primaryGame;
 }

@@ -7,8 +7,6 @@ import { AccountTab } from '../components/settings/AccountTab';
 import { PreferencesTab } from '../components/settings/PreferencesTab';
 import { PrivacyTab } from '../components/settings/PrivacyTab';
 import { SecurityTab } from '../components/settings/SecurityTab';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
-
 export function ProfileSettingsPage() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuthStore();
@@ -50,8 +48,8 @@ export function ProfileSettingsPage() {
     let score = 0;
     let total = 6;
     if (user.username) score++;
-    if (user.displayName) score++;
-    if (user.avatar) score++;
+    if (user.display_name || user.displayName) score++;
+    if (user.avatar_url || user.avatarUrl || user.avatar) score++;
     if (user.bio) score++;
     if (user.gameProfiles && user.gameProfiles.length > 0) score++;
     if (user.socialProfiles && Object.keys(user.socialProfiles).length > 0) score++;
@@ -60,8 +58,19 @@ export function ProfileSettingsPage() {
 
   const completionPct = calculateCompletion();
 
+  const displayName = user?.display_name ?? user?.displayName ?? 'Unknown User';
+  const username = user?.username ?? 'username';
+  const avatarUrl = user?.avatar_url ?? user?.avatarUrl ?? user?.avatar;
+  const rawRole = user?.platform_role ?? user?.platformRole;
+  const onboardingPath = user?.onboarding_path ?? user?.onboardingPath;
+  
+  let displayRole = 'Player';
+  if (rawRole === 'SUPER_ADMIN') displayRole = 'Super Admin';
+  else if (onboardingPath === 'ORGANIZER') displayRole = 'Organizer';
+  else if (onboardingPath === 'PRODUCTION') displayRole = 'Producer';
+
   return (
-    <AuroraBackground className="flex-1 flex flex-col min-h-screen text-slate-300 w-full font-sans" showRadialGradient={true}>
+    <>
       
       <div className="flex-1 overflow-y-auto w-full z-10 relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -98,16 +107,16 @@ export function ProfileSettingsPage() {
               {/* Profile Preview */}
               <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-6 text-center">
                 <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-4 border border-slate-700 overflow-hidden">
-                  {user?.avatar ? (
-                    <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-8 h-8 text-slate-500" />
                   )}
                 </div>
-                <h3 className="text-lg font-bold text-white">{user?.displayName || 'Unknown Player'}</h3>
-                <p className="text-sm text-slate-400 mb-2">@{user?.username || 'username'}</p>
+                <h3 className="text-lg font-bold text-white">{displayName}</h3>
+                <p className="text-sm text-slate-400 mb-2">@{username}</p>
                 <div className="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300 border border-slate-700">
-                  {user?.role || 'Player'}
+                  {displayRole}
                 </div>
               </div>
 
@@ -146,8 +155,8 @@ export function ProfileSettingsPage() {
                   <li className={`flex items-center gap-2 ${user?.username ? 'text-emerald-500' : ''}`}>
                     {user?.username ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-600" />} Username
                   </li>
-                  <li className={`flex items-center gap-2 ${user?.avatar ? 'text-emerald-500' : ''}`}>
-                    {user?.avatar ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-600" />} Avatar
+                  <li className={`flex items-center gap-2 ${avatarUrl ? 'text-emerald-500' : ''}`}>
+                    {avatarUrl ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-600" />} Avatar
                   </li>
                   <li className={`flex items-center gap-2 ${user?.bio ? 'text-emerald-500' : ''}`}>
                     {user?.bio ? <Check className="w-3.5 h-3.5" /> : <div className="w-3.5 h-3.5 rounded-full border border-slate-600" />} Bio
@@ -247,6 +256,6 @@ export function ProfileSettingsPage() {
         </div>
       )}
 
-    </AuroraBackground>
+    </>
   );
 }

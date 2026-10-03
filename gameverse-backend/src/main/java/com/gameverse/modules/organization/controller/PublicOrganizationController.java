@@ -26,6 +26,14 @@ public class PublicOrganizationController {
         return ResponseEntity.ok(ApiResponse.success(publicOrganizationService.getPublicProfile(slug)));
     }
 
+    @GetMapping("/{slug}/tournaments")
+    public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<com.gameverse.modules.tournament.dto.TournamentDto>>> getTournaments(
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(ApiResponse.success(publicOrganizationService.getPublicTournaments(slug, page, size)));
+    }
+
     @PostMapping("/{orgId}/follow")
     public ResponseEntity<ApiResponse<Void>> toggleFollow(@PathVariable String orgId) {
         publicOrganizationService.toggleFollow(orgId);

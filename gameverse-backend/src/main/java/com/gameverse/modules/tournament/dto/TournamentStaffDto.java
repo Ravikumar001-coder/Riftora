@@ -15,4 +15,5 @@ public class TournamentStaffDto {
     private String staffRole;
     private Boolean isActive;
     private LocalDateTime assignedAt;
+    private java.util.List<String> responsibilities;
 }

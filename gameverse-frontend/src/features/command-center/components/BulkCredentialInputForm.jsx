@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Save, AlertTriangle, X, EyeOff, Eye, Plus, Trash2 } from 'lucide-react';
-import axios from 'axios';
+import { api } from '../../../services/api';
 
 export function BulkCredentialInputForm({ tournamentId, matches, onCredentialsSaved, onClose }) {
   const [entries, setEntries] = useState([
@@ -65,10 +65,9 @@ export function BulkCredentialInputForm({ tournamentId, matches, onCredentialsSa
         matchStartMinusXMinutes: entry.releaseMode === 'match_start_minus_x' ? entry.matchStartMinusXMinutes : null
       }));
 
-      const response = await axios.post(
-        'http://localhost:8081/v1/credentials/bulk',
-        payload,
-        { withCredentials: true }
+      const response = await api.post(
+        '/credentials/bulk',
+        payload
       );
       
       if (onCredentialsSaved) onCredentialsSaved(response.data.data);

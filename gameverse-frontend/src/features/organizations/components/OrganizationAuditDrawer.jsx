@@ -12,7 +12,15 @@ const formatDate = (dateString) => {
 };
 
 export function OrganizationAuditDrawer({ isOpen, onClose, orgId }) {
-  const { data: logs, isLoading, isError } = useAuditLogsQuery(orgId);
+  const { data: rawLogs, isLoading, isError } = useAuditLogsQuery(orgId);
+  const logs = rawLogs?.map(log => ({
+    ...log,
+    logId: log.log_id ?? log.logId,
+    eventType: log.event_type ?? log.eventType,
+    targetUsername: log.target_username ?? log.targetUsername,
+    actorUsername: log.actor_username ?? log.actorUsername,
+    changedAt: log.changed_at ?? log.changedAt,
+  })) || [];
 
   if (!isOpen) return null;
 

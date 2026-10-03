@@ -4,9 +4,9 @@ import { ProductionSidebar } from './ProductionSidebar';
 
 export function ProductionLayout() {
   return (
-    <div className="min-h-screen bg-slate-950 flex text-slate-200 selection:bg-blue-500/30">
+    <div className="h-screen bg-transparent flex overflow-hidden text-slate-200 selection:bg-blue-500/30">
       <ProductionSidebar />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <main className="flex-1 overflow-y-auto relative">
           {/* Subtle Background Glows for Production Aesthetic */}
           <div className="absolute top-0 right-0 w-[800px] h-[500px] bg-blue-900/10 blur-[120px] rounded-full pointer-events-none" />

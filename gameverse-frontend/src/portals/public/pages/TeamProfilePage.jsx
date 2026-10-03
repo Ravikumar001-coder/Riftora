@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { TeamHero } from '../components/team/TeamHero';
 import { TeamStats } from '../components/team/TeamStats';
 import { TeamTabs } from '../components/team/TeamTabs';
@@ -29,7 +28,7 @@ export function TeamProfilePage() {
   // Error State (404)
   if (teamError) {
     return (
-      <AuroraBackground>
+      <>
         <div className="container mx-auto px-4 py-20 min-h-screen flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
             <AlertCircle className="w-10 h-10 text-slate-400" />
@@ -47,7 +46,7 @@ export function TeamProfilePage() {
             </Link>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
@@ -136,7 +135,7 @@ export function TeamProfilePage() {
   };
 
   return (
-    <AuroraBackground showRadialGradient={false}>
+    <>
       <div className="min-h-screen pb-20 w-full overflow-x-hidden">
         <TeamHero team={team || {}} isLoading={isLoadingTeam} />
         
@@ -159,6 +158,6 @@ export function TeamProfilePage() {
           </div>
         )}
       </div>
-    </AuroraBackground>
+    </>
   );
 }

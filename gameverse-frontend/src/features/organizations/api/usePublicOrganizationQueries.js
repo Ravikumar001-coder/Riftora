@@ -20,6 +20,13 @@ export const publicOrganizationService = {
   async getIsFollowing(orgId) {
     const response = await api.get(`/public/organizations/${orgId}/is-following`);
     return response.data.data;
+  },
+
+  async getTournaments(slug, page = 0, size = 10) {
+    const response = await api.get(`/public/organizations/${slug}/tournaments`, {
+      params: { page, size }
+    });
+    return response.data.data;
   }
 };
 
@@ -34,6 +41,14 @@ export const usePublicProfileQuery = (slug) => {
   return useQuery({
     queryKey: ['public', 'organizations', slug],
     queryFn: () => publicOrganizationService.getProfile(slug),
+    enabled: !!slug,
+  });
+};
+
+export const usePublicOrganizationTournamentsQuery = (slug, page = 0, size = 10) => {
+  return useQuery({
+    queryKey: ['public', 'organizations', slug, 'tournaments', page, size],
+    queryFn: () => publicOrganizationService.getTournaments(slug, page, size),
     enabled: !!slug,
   });
 };

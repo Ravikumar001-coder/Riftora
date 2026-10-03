@@ -1,3 +1,0 @@
-ALTER TABLE disputes
-ADD COLUMN is_escalated BOOLEAN DEFAULT FALSE,
-ADD COLUMN escalated_at DATETIME;

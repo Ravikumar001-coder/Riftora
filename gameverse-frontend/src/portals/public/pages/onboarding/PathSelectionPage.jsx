@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Loader2, Gamepad2, Trophy, AlertCircle } from 'lucide-react';
 import { AuthGuard } from '../../../../features/auth/components/AuthGuard';
-import { AuroraBackground } from '../../../../components/ui/aurora-background';
 import { useAuthStore } from '../../../../store/authStore';
 import { authService } from '../../../../features/auth/api/auth.service';
 import logo from '../../../../assets/logo.png';
@@ -53,7 +52,7 @@ export function PathSelectionPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col relative z-10 px-6 sm:px-12 py-8">
           
           {/* Header */}
@@ -179,7 +178,7 @@ export function PathSelectionPage() {
             © {new Date().getFullYear()} Riftora Esports. All rights reserved.
           </footer>
         </div>
-      </AuroraBackground>
+      </>
     </AuthGuard>
   );
 }

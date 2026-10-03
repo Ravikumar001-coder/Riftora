@@ -15,6 +15,7 @@ public class TournamentDto {
     private String tournamentId;
     private String orgId;
     private String gameId;
+    private String gameName;
     private String scoringTemplateId;
     private String createdByUserId;
     private String name;
@@ -42,9 +43,10 @@ public class TournamentDto {
     private Integer totalRounds;
     private Integer matchesPerRound;
     private List<String> mapPool;
+    private String tiebreakerRules;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
     private LocalDateTime registrationOpen;
     private LocalDateTime registrationClose;
 
@@ -66,6 +68,7 @@ public class TournamentDto {
 
     private Tournament.TournamentStatus status;
     private LocalDateTime publishedAt;
+    private LocalDateTime scheduledPublishDate;
     private LocalDateTime completedAt;
 
     private String streamUrl;
@@ -77,4 +80,7 @@ public class TournamentDto {
     private Boolean autoLockCredentials;
     private Integer autoLockMinsAfterStart;
     private List<UpdateTournamentRequest.PrizePositionDto> prizePositions;
+    
+    // Staff Access Codes
+    private String masterAccessCode;
 }

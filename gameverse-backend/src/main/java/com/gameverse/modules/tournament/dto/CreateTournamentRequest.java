@@ -2,9 +2,11 @@ package com.gameverse.modules.tournament.dto;
 
 import com.gameverse.modules.tournament.entity.Tournament;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Min;
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 public class CreateTournamentRequest {
@@ -27,6 +29,14 @@ public class CreateTournamentRequest {
     private String logoUrl;
     private String bannerUrl;
 
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
+    
+    @NotNull(message = "Max team size is required")
+    @Min(value = 1, message = "Max team size must be at least 1")
+    private Integer maxTeamSize = 1;
+    
+    @NotNull(message = "Min team size is required")
+    @Min(value = 1, message = "Min team size must be at least 1")
+    private Integer minTeamSize = 1;
 }

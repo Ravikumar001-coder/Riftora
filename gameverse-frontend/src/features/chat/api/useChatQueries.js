@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/v1';
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/v1';
+// ADB Reverse handles port forwarding, so we keep localhost as is
 
 export const useChatHistory = (tournamentId, channel) => {
   return useQuery({

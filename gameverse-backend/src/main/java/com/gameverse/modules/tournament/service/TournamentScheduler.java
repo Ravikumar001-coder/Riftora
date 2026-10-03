@@ -23,6 +23,17 @@ public class TournamentScheduler {
     public void processTournamentStateTransitions() {
         LocalDateTime now = LocalDateTime.now();
 
+        // draft -> published
+        List<Tournament> draftTournaments = tournamentRepository.findByStatus(Tournament.TournamentStatus.draft);
+        for (Tournament t : draftTournaments) {
+            if (t.getScheduledPublishDate() != null && !now.isBefore(t.getScheduledPublishDate())) {
+                log.info("Tournament {} automatically transitioned to PUBLISHED", t.getTournamentId());
+                t.setStatus(Tournament.TournamentStatus.published);
+                t.setPublishedAt(now);
+                tournamentRepository.save(t);
+            }
+        }
+
         // published -> registration_open
         List<Tournament> publishedTournaments = tournamentRepository.findByStatus(Tournament.TournamentStatus.published);
         for (Tournament t : publishedTournaments) {

@@ -8,21 +8,17 @@ import {
   BarChart3, 
   Settings, 
   CreditCard,
-  ClipboardList,
-  CalendarDays,
-  Radio,
-  UserCog,
   Bell,
   User
 } from 'lucide-react';
 import logo from '../../../assets/logo.png';
 import { useAuthStore } from '../../../store/authStore';
 
-export function OrganizerSidebar({ isOpen, setIsOpen, orgSlug, role }) {
+export function OrganizerSidebar({ isOpen, setIsOpen, orgSlug, role, hasActiveOrg }) {
   const { user, logout } = useAuthStore();
   // Roles: 'Org Owner', 'Org Admin', 'Tournament Director'
   const isOwner = role === 'Org Owner';
-  const isAdminOrOwner = isOwner || role === 'Org Admin';
+  const isAdminOrOwner = true; // Always true so we always render it (we use hasActiveOrg to disable)
 
   const organizationNav = [
     { name: 'Overview', path: `/organizations/${orgSlug}/manage/overview`, icon: Building2 },
@@ -30,6 +26,7 @@ export function OrganizerSidebar({ isOpen, setIsOpen, orgSlug, role }) {
     { name: 'Members', path: `/organizations/${orgSlug}/manage/members`, icon: Users },
     { name: 'Analytics', path: `/organizations/${orgSlug}/manage/analytics`, icon: BarChart3 },
     { name: 'Scoring Templates', path: `/organizations/${orgSlug}/manage/scoring`, icon: Trophy },
+    { name: 'Game Configurations', path: `/organizations/${orgSlug}/manage/game-configurations`, icon: Trophy },
     { name: 'Settings', path: `/organizations/${orgSlug}/manage/settings`, icon: Settings },
   ];
 
@@ -37,40 +34,43 @@ export function OrganizerSidebar({ isOpen, setIsOpen, orgSlug, role }) {
     organizationNav.push({ name: 'Billing', path: `/organizations/${orgSlug}/manage/billing`, icon: CreditCard });
   }
 
-  const operationsNav = [
-    { name: 'Registrations', path: `/manage/t1/registrations`, icon: ClipboardList }, // Hardcoded t1 for mock
-    { name: 'Schedule', path: `/manage/t1/schedule`, icon: CalendarDays },
-    { name: 'Command Center', path: `/command-center/t1`, icon: Radio },
-    { name: 'Staff', path: `/manage/t1/staff`, icon: UserCog },
-  ];
+
 
   const platformNav = [
-    { name: 'Notifications', path: '/notifications', icon: Bell },
+    { name: 'Notifications', path: '/dashboard/organizer/notifications', icon: Bell },
     { name: 'Profile', path: '/profile/me', icon: User },
   ];
 
-  const renderNavGroup = (title, items) => (
+  const renderNavGroup = (title, items, requireOrg = false) => (
     <div className="mb-6">
       <h3 className="px-4 text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">
         {title}
       </h3>
       <nav className="space-y-1">
-        {items.map((item) => (
-          <NavLink
-            key={item.name}
-            to={item.path}
-            onClick={() => setIsOpen(false)}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors mx-2
-              ${isActive 
-                ? 'bg-amber-500/10 text-amber-500' 
-                : 'text-slate-400 hover:bg-slate-900 hover:text-slate-200'}
-            `}
-          >
-            <item.icon className="w-4 h-4" />
-            <span className="text-sm">{item.name}</span>
-          </NavLink>
-        ))}
+        {items.map((item) => {
+          const isDisabled = requireOrg && !hasActiveOrg;
+          return (
+            <NavLink
+              key={item.name}
+              to={isDisabled ? '#' : item.path}
+              onClick={(e) => {
+                if (isDisabled) e.preventDefault();
+                else setIsOpen(false);
+              }}
+              title={isDisabled ? "Create an organization to unlock this feature." : ""}
+              className={({ isActive }) => `
+                flex items-center gap-3 px-4 py-2 rounded-lg font-medium transition-colors mx-2
+                ${isDisabled ? 'opacity-50 pointer-events-none cursor-not-allowed text-slate-500' : ''}
+                ${!isDisabled && isActive 
+                  ? 'bg-amber-500/10 text-amber-500' 
+                  : !isDisabled ? 'text-slate-400 hover:bg-slate-900 hover:text-slate-200' : ''}
+              `}
+            >
+              <item.icon className="w-4 h-4" />
+              <span className="text-sm">{item.name}</span>
+            </NavLink>
+          );
+        })}
       </nav>
     </div>
   );
@@ -120,9 +120,9 @@ export function OrganizerSidebar({ isOpen, setIsOpen, orgSlug, role }) {
               </nav>
             </div>
 
-            {isAdminOrOwner && renderNavGroup('Organization', organizationNav)}
-            {renderNavGroup('Tournament Operations', operationsNav)}
-            {renderNavGroup('Platform', platformNav)}
+            {isAdminOrOwner && renderNavGroup('Organization', organizationNav, true)}
+
+            {renderNavGroup('Platform', platformNav, false)}
           </div>
 
           <div className="p-4 border-t border-slate-800">

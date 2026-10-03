@@ -4,15 +4,15 @@ import {
   LayoutDashboard, Users, Calendar, Trophy, 
   UserPlus, Settings, ChevronLeft, ArrowLeft
 } from 'lucide-react';
-import { mockTournamentData } from '../data/mockTournamentOverview';
-
+import { useGetTournament } from '../api/useTournamentQueries';
 const NAVIGATION = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, path: '/manage/:tournamentId/overview' },
   { id: 'registrations', label: 'Registrations', icon: Users, path: '/manage/:tournamentId/registrations' },
   { id: 'schedule', label: 'Schedule', icon: Calendar, path: '/manage/:tournamentId/schedule' },
   { id: 'prizes', label: 'Prizes', icon: Trophy, path: '/manage/:tournamentId/prizes' },
   { id: 'staff', label: 'Staff', icon: UserPlus, path: '/manage/:tournamentId/staff' },
-  { id: 'settings', label: 'Settings', icon: Settings, path: '/manage/:tournamentId/settings' }
+  { id: 'settings', label: 'Settings', icon: Settings, path: '/manage/:tournamentId/settings' },
+  { id: 'rules', label: 'Rules Config', icon: Settings, path: '/manage/:tournamentId/rules' }
 ];
 
 export function TournamentManagementLayout() {
@@ -25,15 +25,21 @@ export function TournamentManagementLayout() {
     resolvedPath: item.path.replace(':tournamentId', tournamentId)
   }));
 
-  // In a real app we'd fetch the tournament data here to ensure access.
-  // For now, we use the mock data.
-  const t = mockTournamentData;
+  const { data: t, isLoading } = useGetTournament(tournamentId);
+
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-400">Loading tournament dashboard...</div>;
+  }
+  
+  if (!t) {
+    return <div className="min-h-screen flex items-center justify-center text-slate-400">Tournament not found.</div>;
+  }
 
   return (
-    <div className="min-h-screen bg-[#071426] text-slate-300 font-sans selection:bg-blue-500/30">
+    <div className="h-screen w-full flex flex-col overflow-hidden bg-transparent text-slate-300 font-sans selection:bg-blue-500/30">
       
       {/* Top Header */}
-      <header className="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 h-16 flex items-center justify-between px-4 lg:px-8">
+      <header className="shrink-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 h-16 flex items-center justify-between px-4 lg:px-8">
         <div className="flex items-center gap-4">
           <Link to="/dashboard/organizer" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-medium">
             <ArrowLeft className="w-4 h-4" /> Back to Organizations
@@ -55,13 +61,13 @@ export function TournamentManagementLayout() {
         </div>
       </header>
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="hidden lg:block w-64 shrink-0 border-r border-slate-800 min-h-[calc(100vh-64px)] p-4 sticky top-16">
+        <aside className="hidden lg:block w-64 shrink-0 border-r border-slate-800 h-full overflow-y-auto p-4 z-40">
           <div className="mb-6 px-3">
             <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Tournament Management</p>
           </div>
-          <nav className="space-y-1">
+          <nav className="space-y-1 relative z-50">
             {navItems.map((item) => {
               const isActive = location.pathname.includes(item.id);
               return (
@@ -85,8 +91,9 @@ export function TournamentManagementLayout() {
         {/* Mobile Navigation Dropdown/Scroll area (Optional improvement, skipping for now, keeping content area primary) */}
 
         {/* Main Content */}
-        <main className="flex-1 w-full min-w-0 p-4 lg:p-8">
-          <Outlet />
+        <main className="flex-1 h-full overflow-y-auto overflow-x-hidden relative p-4 lg:p-8">
+          {console.log("Rendering Outlet with key:", location.pathname)}
+          <Outlet key={location.pathname} />
         </main>
       </div>
     </div>

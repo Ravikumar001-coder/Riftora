@@ -11,7 +11,7 @@ export default function CreateTournamentPage() {
                 </p>
             </div>
             
-            <div className="bg-card rounded-lg border shadow-sm">
+            <div className="w-full">
                 <TournamentWizard />
             </div>
         </div>

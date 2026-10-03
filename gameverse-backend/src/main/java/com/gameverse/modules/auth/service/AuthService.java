@@ -47,6 +47,8 @@ public class AuthService {
     private final DisposableEmailDomainRepository disposableEmailDomainRepository;
     private final LoginHistoryRepository loginHistoryRepository;
     private final OrgMemberRepository orgMemberRepository;
+    private final com.gameverse.modules.organization.repository.OrganizationRepository organizationRepository;
+    private final com.gameverse.modules.tournament.repository.TournamentRepository tournamentRepository;
 
     @Transactional
     public void registerWithEmail(EmailRegisterRequest request) {
@@ -141,10 +143,29 @@ public class AuthService {
         return buildAuthResponse(user, ipAddress, userAgent);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public UserDto getMe(String userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        var memberships = orgMemberRepository.findByUser_UserId(user.getUserId());
+        if (memberships.isEmpty()) {
+            var ownedOrgs = organizationRepository.findAllByOwner_UserId(user.getUserId());
+            for (var org : ownedOrgs) {
+                com.gameverse.modules.organization.entity.OrgMember newMember = new com.gameverse.modules.organization.entity.OrgMember();
+                newMember.setOrganization(org);
+                newMember.setUser(user);
+                newMember.setRole(com.gameverse.modules.organization.entity.OrgMember.OrgRole.org_owner);
+                orgMemberRepository.save(newMember);
+            }
+            memberships = orgMemberRepository.findByUser_UserId(user.getUserId());
+        }
+
+        if (!Boolean.TRUE.equals(user.getOnboardingCompleted()) && !memberships.isEmpty()) {
+            user.setOnboardingCompleted(true);
+            user.setOnboardingPath(User.OnboardingPath.organizer);
+            user = userRepository.save(user);
+        }
 
         return UserDto.builder()
                 .userId(user.getUserId())
@@ -163,7 +184,13 @@ public class AuthService {
                         .map(member -> UserOrgRoleDto.builder()
                                 .orgId(member.getOrganization().getOrgId())
                                 .orgName(member.getOrganization().getOrgName())
+                                .orgSlug(member.getOrganization().getOrgSlug())
                                 .orgRole(member.getRole().name())
+                                .activeTournaments((int) tournamentRepository.countByOrganization_OrgIdAndStatusIn(
+                                        member.getOrganization().getOrgId(),
+                                        java.util.List.of(com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.live)
+                                ))
+                                .totalMembers((int) orgMemberRepository.countByOrganization_OrgId(member.getOrganization().getOrgId()))
                                 .build())
                         .toList()
                 )
@@ -229,18 +256,22 @@ public class AuthService {
     }
 
     @Transactional
-    public UserDto completeOnboarding(String userId, String username, String displayName, String onboardingPath) {
+    public UserDto completeOnboarding(String userId, com.gameverse.modules.auth.dto.OnboardingRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (userRepository.existsByUsername(username) && !username.equals(user.getUsername())) {
+        if (userRepository.existsByUsername(request.getUsername()) && !request.getUsername().equals(user.getUsername())) {
             throw new RuntimeException("Username is already taken");
         }
 
-        user.setUsername(username);
-        user.setDisplayName(displayName);
+        user.setUsername(request.getUsername());
+        user.setDisplayName(request.getDisplayName());
+        if (request.getBio() != null) {
+            user.setBio(request.getBio());
+        }
+        
         try {
-            user.setOnboardingPath(User.OnboardingPath.valueOf(onboardingPath.toLowerCase()));
+            user.setOnboardingPath(User.OnboardingPath.valueOf(request.getOnboardingPath().toLowerCase()));
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Invalid onboarding path");
         }
@@ -565,6 +596,25 @@ public class AuthService {
         session.setExpiresAt(LocalDateTime.now().plusDays(30));
         userSessionRepository.save(session);
 
+        var memberships = orgMemberRepository.findByUser_UserId(user.getUserId());
+        if (memberships.isEmpty()) {
+            var ownedOrgs = organizationRepository.findAllByOwner_UserId(user.getUserId());
+            for (var org : ownedOrgs) {
+                com.gameverse.modules.organization.entity.OrgMember newMember = new com.gameverse.modules.organization.entity.OrgMember();
+                newMember.setOrganization(org);
+                newMember.setUser(user);
+                newMember.setRole(com.gameverse.modules.organization.entity.OrgMember.OrgRole.org_owner);
+                orgMemberRepository.save(newMember);
+            }
+            memberships = orgMemberRepository.findByUser_UserId(user.getUserId());
+        }
+
+        if (!Boolean.TRUE.equals(user.getOnboardingCompleted()) && !memberships.isEmpty()) {
+            user.setOnboardingCompleted(true);
+            user.setOnboardingPath(User.OnboardingPath.organizer);
+            user = userRepository.save(user);
+        }
+
         UserDto userDto = UserDto.builder()
                 .userId(user.getUserId())
                 .username(user.getUsername())
@@ -578,11 +628,17 @@ public class AuthService {
                 .country(user.getCountry())
                 .profileVisibility(user.getProfileVisibility() != null ? user.getProfileVisibility().name() : null)
                 .orgRoles(
-                    orgMemberRepository.findByUser_UserId(user.getUserId()).stream()
+                    memberships.stream()
                         .map(member -> UserOrgRoleDto.builder()
                                 .orgId(member.getOrganization().getOrgId())
                                 .orgName(member.getOrganization().getOrgName())
+                                .orgSlug(member.getOrganization().getOrgSlug())
                                 .orgRole(member.getRole().name())
+                                .activeTournaments((int) tournamentRepository.countByOrganization_OrgIdAndStatusIn(
+                                        member.getOrganization().getOrgId(),
+                                        java.util.List.of(com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.live)
+                                ))
+                                .totalMembers((int) orgMemberRepository.countByOrganization_OrgId(member.getOrganization().getOrgId()))
                                 .build())
                         .toList()
                 )

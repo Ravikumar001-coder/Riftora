@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../../store/authStore';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { Loader2 } from 'lucide-react';
 
 const OrgRoleGuardLoadingState = () => (
-  <AuroraBackground>
+  <>
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
       <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-6" />
       <h2 className="text-xl font-bold text-white mb-2">Verifying organization access...</h2>
     </div>
-  </AuroraBackground>
+  </>
 );
 
 export function OrgRoleGuard({ children, allowedRoles = [], redirectTo = '/', requireOrgId = false }) {

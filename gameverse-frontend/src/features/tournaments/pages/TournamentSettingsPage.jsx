@@ -8,7 +8,7 @@ import { Save, Image as ImageIcon, LayoutTemplate, Image } from 'lucide-react';
 import { useGetTournament } from '../api/useTournamentQueries';
 import { useUpdateTournament } from '../api/useTournamentMutations';
 import { GraphicPreviewModal } from '../../graphics/components/GraphicPreviewModal';
-import axios from 'axios';
+import { api } from '../../../services/api';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { StreamSettingsPanel } from '../../broadcast/components/StreamSettingsPanel';
@@ -71,12 +71,11 @@ export function TournamentSettingsPage() {
     setGeneratedGraphicUrl(null);
     setIsGraphicModalOpen(true);
     try {
-       const response = await axios.post(
-         `http://localhost:8081/v1/tournaments/${tournamentId}/graphics/generate`, 
+       const response = await api.post(
+         `/tournaments/${tournamentId}/graphics/generate`, 
          null, 
          {
-           params: { type, targetId: tournamentId, includeWatermark: true },
-           withCredentials: true 
+           params: { type, targetId: tournamentId, includeWatermark: true }
          }
        );
        setGeneratedGraphicUrl(response.data.data?.url || response.data.url);

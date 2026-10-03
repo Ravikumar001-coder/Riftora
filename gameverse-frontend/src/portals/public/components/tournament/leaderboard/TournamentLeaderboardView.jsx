@@ -62,8 +62,10 @@ export function TournamentLeaderboardView({ tournament }) {
   const [selectedMatch, setSelectedMatch] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Mock filters configuration (In a real app, these would come from the backend)
-  const stages = ['Group Stage', 'Semi Finals', 'Grand Finals'];
+  // Use roadmap stages if available, otherwise default to multi-stage roadmap
+  const stages = tournament.roadmapStages 
+    ? tournament.roadmapStages.map(s => s.name)
+    : ['Qualifiers', 'Quarter Finals', 'Semi Finals', 'Grand Finals'];
   const groups = ['Group A', 'Group B'];
   const matches = [{ id: 'm1', number: 1 }, { id: 'm2', number: 2 }, { id: 'm3', number: 3 }, { id: 'm4', number: 4 }];
 

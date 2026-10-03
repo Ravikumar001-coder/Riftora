@@ -85,8 +85,10 @@ export function TournamentHero({ tournament }) {
     }
   };
 
-  const date = new Date(tournament.startsAt);
-  const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const dateStr = tournament.start_date || tournament.startDate;
+  const formattedDate = dateStr ? new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD';
+  const banner = tournament.banner_url || tournament.bannerUrl;
+  const gameName = tournament.game_name || tournament.gameName || 'TBA';
 
   return (
     <div className="relative pt-24 pb-10 overflow-hidden">
@@ -94,9 +96,9 @@ export function TournamentHero({ tournament }) {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-t from-[#040d1a]/80 via-[#040d1a]/50 to-transparent z-10" />
         <div className="absolute inset-0 bg-gradient-to-r from-[#040d1a]/60 via-transparent to-[#040d1a]/60 z-10" />
-        {tournament.banner ? (
+        {banner ? (
           <img 
-            src={tournament.banner} 
+            src={banner} 
             alt={`${tournament.name} banner`} 
             className="w-full h-full object-cover opacity-30 object-center"
           />
@@ -115,41 +117,44 @@ export function TournamentHero({ tournament }) {
 
         <div className="flex flex-col lg:flex-row gap-8 lg:items-end">
           
-          <div className="flex-1">
-            <div className="flex flex-wrap items-center gap-3 mb-4">
-              <Badge className={cn("px-3 py-1 text-xs font-bold border", currentStatus.class)}>
-                {currentStatus.label}
-              </Badge>
-              {tournament.tournamentTier && (
-                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
-                  {tournament.tournamentTier} Tier
+          <div className="flex gap-6 items-end flex-1">
+            {(tournament.logo_url || tournament.logoUrl) && (
+              <img 
+                src={tournament.logo_url || tournament.logoUrl} 
+                alt={`${tournament.name} logo`}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover shadow-2xl border border-slate-700/50 bg-slate-900"
+              />
+            )}
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <Badge className={cn("px-3 py-1 text-xs font-bold border", currentStatus.class)}>
+                  {currentStatus.label}
                 </Badge>
-              )}
-              {tournament.tournamentType && (
-                <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
-                  {tournament.tournamentType}
-                </Badge>
-              )}
-            </div>
+                {(tournament.tournamentTier || tournament.tournament_tier) && (
+                  <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
+                    {tournament.tournamentTier || tournament.tournament_tier} Tier
+                  </Badge>
+                )}
+                {(tournament.tournamentType || tournament.tournament_type) && (
+                  <Badge variant="outline" className="border-slate-700 bg-slate-800/50 text-slate-300">
+                    {tournament.tournamentType || tournament.tournament_type}
+                  </Badge>
+                )}
+              </div>
 
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
-              {tournament.name}
-            </h1>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+                {tournament.name}
+              </h1>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 mb-8">
+              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-300 mb-8">
               <div className="flex items-center gap-1.5">
                 <Gamepad2 className="w-4 h-4 text-blue-400" />
-                <span>{tournament.game}</span>
+                <span>{gameName}</span>
               </div>
               <span className="text-slate-600">•</span>
               <div className="flex items-center gap-1.5">
                 <Calendar className="w-4 h-4 text-blue-400" />
                 <span>Starts {formattedDate}</span>
-              </div>
-              <span className="text-slate-600">•</span>
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-blue-400" />
-                <span>{tournament.region}</span>
               </div>
             </div>
 
@@ -169,6 +174,7 @@ export function TournamentHero({ tournament }) {
               <Button variant="ghost" className="text-slate-400 hover:text-white hover:bg-white/5">
                 Share
               </Button>
+            </div>
             </div>
           </div>
 

@@ -6,7 +6,7 @@ import {
   AlertTriangle, Upload, X, ChevronRight, Check
 } from 'lucide-react';
 import { mockOrganizationSettings } from '../../../portals/organizer/data/mockSettings';
-import { organizerDashboardData } from '../../../portals/organizer/data/mockOrganizerData';
+
 import { useOrganizationBySlugQuery, useOrganizationMembersQuery } from '../api/useOrganizationQueries';
 import { useOrganizationMutations } from '../api/useOrganizationMutations';
 import { BrandKitPanel } from '../components/BrandKitPanel';
@@ -128,6 +128,35 @@ export function OrganizationSettingsPage() {
     const initialStr = JSON.stringify(initialState);
     setIsDirty(currentStr !== initialStr);
   }, [formData, initialState]);
+
+  // ScrollSpy for Sidebar
+  useEffect(() => {
+    if (isLoading || !isAuthorized) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px',
+        threshold: 0
+      }
+    );
+
+    const elements = Object.values(sectionRefs.current);
+    elements.forEach((el) => {
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isLoading, isAuthorized]);
 
   if (isLoading) {
     return (

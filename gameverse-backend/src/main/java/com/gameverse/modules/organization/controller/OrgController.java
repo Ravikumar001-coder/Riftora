@@ -74,9 +74,21 @@ public class OrgController {
         return ResponseEntity.ok(ApiResponse.success(orgService.getOrganizationBySlug(orgSlug)));
     }
 
+    @GetMapping("/check-slug")
+    public ResponseEntity<ApiResponse<Map<String, Boolean>>> checkSlugAvailability(@RequestParam String slug) {
+        boolean exists = orgService.checkSlugExists(slug);
+        return ResponseEntity.ok(ApiResponse.success(Map.of("available", !exists)));
+    }
+
     @GetMapping("/by-subdomain/{customSubdomain}")
     public ResponseEntity<ApiResponse<OrgResponse>> getOrganizationByCustomSubdomain(@PathVariable String customSubdomain) {
         return ResponseEntity.ok(ApiResponse.success(orgService.getOrganizationByCustomSubdomain(customSubdomain)));
+    }
+
+    @GetMapping("/{orgId}/dashboard-stats")
+    @org.springframework.security.access.prepost.PreAuthorize("@orgSecurity.hasRole(#orgId, 'org_owner', 'org_admin')")
+    public ResponseEntity<ApiResponse<com.gameverse.modules.organization.dto.dashboard.DashboardDataDto>> getDashboardStats(@PathVariable String orgId) {
+        return ResponseEntity.ok(ApiResponse.success(orgService.getDashboardStats(orgId)));
     }
 
     @PutMapping("/{orgId}/settings")

@@ -16,4 +16,8 @@ public interface TournamentRepository extends JpaRepository<Tournament, String>,
     Page<Tournament> findByStatus(Tournament.TournamentStatus status, Pageable pageable);
     java.util.List<Tournament> findByStatus(Tournament.TournamentStatus status);
     Page<Tournament> findByGame_GameIdAndStatusIn(String gameId, java.util.List<Tournament.TournamentStatus> statuses, Pageable pageable);
+    long countByOrganization_OrgIdAndStatusIn(String orgId, java.util.List<Tournament.TournamentStatus> statuses);
+    Page<Tournament> findAllByOrganization_OrgIdAndStatusIn(String orgId, java.util.List<Tournament.TournamentStatus> statuses, Pageable pageable);
+
+    Optional<Tournament> findByMasterAccessCode(String code);
 }

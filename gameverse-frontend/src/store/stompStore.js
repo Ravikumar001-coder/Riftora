@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client/dist/sockjs';
+import { useAuthStore } from './authStore';
 
-const WS_URL = import.meta.env.VITE_API_URL?.replace('/v1', '/ws') || 'http://localhost:8081/ws';
+let WS_URL = import.meta.env.VITE_API_URL?.replace('/v1', '/ws') || 'http://localhost:8081/ws';
+
+// ADB Reverse handles port forwarding, so we keep localhost as is
 
 export const useStompStore = create((set, get) => ({
   client: null,
@@ -12,7 +15,8 @@ export const useStompStore = create((set, get) => ({
   connect: () => {
     if (get().client) return;
 
-    const token = localStorage.getItem('token');
+    // Use zustand authStore instead of localStorage directly since it's persisted by zustand
+    const { accessToken: token } = useAuthStore.getState();
     
     const client = new Client({
       webSocketFactory: () => new SockJS(WS_URL),

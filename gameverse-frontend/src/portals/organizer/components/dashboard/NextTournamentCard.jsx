@@ -43,7 +43,9 @@ export function NextTournamentCard({ tournament }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm font-bold text-slate-300 tracking-wider">NEXT TOURNAMENT</span>
-          <span className="text-sm font-bold text-slate-400">TODAY</span>
+          <span className="text-sm font-bold text-slate-400 uppercase">
+            {new Date(tournament.startAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+          </span>
         </div>
 
         {/* Content */}
@@ -87,7 +89,7 @@ export function NextTournamentCard({ tournament }) {
                 <Clock className="w-4 h-4" /> Start
               </div>
               <div className="text-sm font-bold text-white">
-                Today • {new Date(tournament.startAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                {new Date(tournament.startAt).toLocaleDateString([], { month: 'short', day: 'numeric' })} • {new Date(tournament.startAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
               </div>
             </div>
           </div>

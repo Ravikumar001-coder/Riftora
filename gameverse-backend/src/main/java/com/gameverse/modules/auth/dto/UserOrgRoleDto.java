@@ -8,5 +8,8 @@ import lombok.Data;
 public class UserOrgRoleDto {
     private String orgId;
     private String orgName;
+    private String orgSlug;
     private String orgRole;
+    private Integer activeTournaments;
+    private Integer totalMembers;
 }

@@ -12,8 +12,6 @@ import { TeamPreviewCard } from '../components/TeamPreviewCard';
 import { ImageUploadInput } from '../components/ImageUploadInput';
 import { Input } from '../../../components/ui/input';
 import { Button } from '../../../components/ui/button';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
-
 // Zod schema matching PRD requirements
 const createTeamSchema = z.object({
   teamName: z.string().trim()
@@ -126,7 +124,7 @@ export const CreateTeamPage = () => {
   }
 
   return (
-    <AuroraBackground className="min-h-screen pb-20 font-sans" showRadialGradient={true}>
+    <>
       {/* Header */}
       <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -378,6 +376,6 @@ export const CreateTeamPage = () => {
           </div>
         </div>
       </main>
-    </AuroraBackground>
+    </>
   );
 };

@@ -11,7 +11,6 @@ import { ManageTournamentsTab } from '../components/manage/ManageTournamentsTab'
 import { ManageSettingsTab } from '../components/manage/ManageSettingsTab';
 import { ManageFinanceTab } from '../components/manage/ManageFinanceTab';
 import { DollarSign } from 'lucide-react';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { useAuthStore } from '../../../store/authStore';
 import { useGetTeamBySlug } from '../api/useTeamQueries';
 
@@ -138,7 +137,7 @@ export function TeamManagementPage() {
   ];
 
   return (
-    <AuroraBackground className="flex-1 flex flex-col min-h-screen w-full font-sans text-slate-300" showRadialGradient={true}>
+    <>
       <div className="flex-1 overflow-y-auto w-full z-10 relative">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           
@@ -346,6 +345,6 @@ export function TeamManagementPage() {
         </div>
       )}
 
-    </AuroraBackground>
+    </>
   );
 }

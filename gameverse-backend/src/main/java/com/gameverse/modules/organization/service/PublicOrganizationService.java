@@ -21,6 +21,8 @@ public class PublicOrganizationService {
     private final OrganizationRepository organizationRepository;
     private final OrgFollowerRepository orgFollowerRepository;
     private final UserRepository userRepository;
+    private final com.gameverse.modules.tournament.repository.TournamentRepository tournamentRepository;
+    private final com.gameverse.modules.tournament.service.TournamentService tournamentService;
 
     @Transactional(readOnly = true)
     public List<java.util.Map<String, Object>> getPublicDirectory() {
@@ -74,6 +76,27 @@ public class PublicOrganizationService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<com.gameverse.modules.tournament.dto.TournamentDto> getPublicTournaments(String slug, int page, int size) {
+        Organization organizationEntity = organizationRepository.findByOrgSlug(slug)
+                .orElseThrow(() -> new RuntimeException("Organization not found"));
+        
+        java.util.List<com.gameverse.modules.tournament.entity.Tournament.TournamentStatus> publicStatuses = java.util.List.of(
+            com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.published,
+            com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.registration_open,
+            com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.live,
+            com.gameverse.modules.tournament.entity.Tournament.TournamentStatus.completed
+        );
+        
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "startDate"));
+        return tournamentRepository.findAllByOrganization_OrgIdAndStatusIn(organizationEntity.getOrgId(), publicStatuses, pageable)
+                .map(t -> {
+                    // We need to map to DTO, we can use TournamentService if it has a public mapToDto, or just return basic info. 
+                    // Let's use TournamentService's getTournament to get the DTO since mapToDto is private.
+                    return tournamentService.getTournament(t.getTournamentId());
+                });
+    }
+
     private java.util.Map<String, Object> mapToPublicDto(Organization org) {
         java.util.Map<String, Object> dto = new java.util.HashMap<>();
         dto.put("orgId", org.getOrgId());
@@ -87,6 +110,13 @@ public class PublicOrganizationService {
         dto.put("primaryGame", org.getPrimaryGame() != null ? org.getPrimaryGame().getGameName() : null);
         dto.put("followerCount", orgFollowerRepository.countByOrganization_OrgId(org.getOrgId()));
         dto.put("isVerified", org.getIsVerified());
+        dto.put("websiteUrl", org.getWebsiteUrl());
+        dto.put("instagramHandle", org.getInstagramHandle());
+        dto.put("youtubeUrl", org.getYoutubeUrl());
+        dto.put("discordLink", org.getDiscordLink());
+        dto.put("contactEmail", org.getContactEmail());
+        dto.put("primaryColor", org.getPrimaryColor());
+        dto.put("secondaryColor", org.getSecondaryColor());
         return dto;
     }
 }

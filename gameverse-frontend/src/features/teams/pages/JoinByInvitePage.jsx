@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useJoinTeamByCode } from '../api/useTeamQueries';
@@ -31,7 +30,7 @@ export function JoinByInvitePage() {
   };
 
   return (
-    <AuroraBackground showRadialGradient={false}>
+    <>
       <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
@@ -89,6 +88,6 @@ export function JoinByInvitePage() {
           )}
         </motion.div>
       </div>
-    </AuroraBackground>
+    </>
   );
 }

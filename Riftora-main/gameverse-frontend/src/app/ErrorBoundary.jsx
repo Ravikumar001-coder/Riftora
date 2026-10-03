@@ -1,1 +1,0 @@
-export function ErrorBoundary({children}) { return <>{children}</> }

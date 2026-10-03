@@ -26,8 +26,8 @@ export function TournamentRegistrationsPage() {
   const [toastMessage, setToastMessage] = useState(null);
 
   // Queries
-  const { data: t } = useTournamentById(tournamentId);
-  const { data: registrationPage, isLoading } = useGetTournamentRegistrations(tournamentId, page - 1, itemsPerPage);
+  const { data: t, error: tError, isLoading: isTLoading } = useTournamentById(tournamentId);
+  const { data: registrationPage, isLoading, error: rError } = useGetTournamentRegistrations(tournamentId, page - 1, itemsPerPage);
   const { data: rosterData, isLoading: isLoadingRoster } = useGetRegistrationRoster(selectedRegistration?.registrationId);
   const { mutate: updateStatus } = useUpdateRegistrationStatus();
   const { mutate: verifyUids, isPending: isVerifying } = useVerifyTournamentUids();
@@ -181,8 +181,28 @@ export function TournamentRegistrationsPage() {
     }
   };
 
-  if (isLoading || !t) {
-    return <div className="p-8 text-center text-slate-400">Loading registrations...</div>;
+  if (isTLoading || isLoading) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-400">Loading registrations...</p>
+      </div>
+    );
+  }
+
+  if (tError || rError || !t) {
+    return (
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px] text-center">
+        <ShieldAlert className="w-12 h-12 text-red-500 mb-4 opacity-80" />
+        <h3 className="text-xl font-bold text-white mb-2">Failed to load data</h3>
+        <p className="text-slate-400 max-w-md">
+          {tError ? tError.message : rError ? rError.message : "Tournament not found or you don't have access."}
+        </p>
+        <Link to="/dashboard/organizer" className="mt-6 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-colors text-sm font-medium">
+          Return to Dashboard
+        </Link>
+      </div>
+    );
   }
 
   return (

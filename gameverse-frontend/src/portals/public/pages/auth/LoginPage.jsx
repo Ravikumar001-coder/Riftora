@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { LoginForm } from '../../../../features/auth/components/LoginForm';
 import { AuthGuard } from '../../../../features/auth/components/AuthGuard';
-import { AuroraBackground } from '../../../../components/ui/aurora-background';
 import logo from '../../../../assets/logo.png';
 import { Link } from 'react-router-dom';
 
@@ -12,7 +11,7 @@ export function LoginPage() {
 
   return (
     <AuthGuard requireAuth={false} redirectTo="/dashboard">
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col lg:flex-row relative z-10">
           
           {/* Left Side: Branding & Context (Hidden on mobile) */}
@@ -53,7 +52,7 @@ export function LoginPage() {
           </div>
 
         </div>
-      </AuroraBackground>
+      </>
     </AuthGuard>
   );
 }

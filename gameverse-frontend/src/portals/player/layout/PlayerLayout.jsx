@@ -3,8 +3,6 @@ import { Outlet } from 'react-router-dom';
 import { PlayerSidebar } from '../components/PlayerSidebar';
 import { PlayerHeader } from '../components/PlayerHeader';
 import { AuthGuard } from '../../../features/auth/components/AuthGuard';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
-
 export function PlayerLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -15,8 +13,8 @@ export function PlayerLayout() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <AuroraBackground className="h-screen overflow-hidden text-slate-300" showRadialGradient={true}>
-        <div className="flex w-full flex-1 min-h-0">
+      <>
+        <div className="h-screen flex w-full overflow-hidden bg-transparent text-slate-300">
           <PlayerSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
           
           <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden relative">
@@ -34,7 +32,7 @@ export function PlayerLayout() {
             </main>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     </AuthGuard>
   );
 }

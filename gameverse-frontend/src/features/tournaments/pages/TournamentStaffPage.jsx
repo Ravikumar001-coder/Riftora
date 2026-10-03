@@ -3,20 +3,35 @@ import { useParams, Link } from 'react-router-dom';
 import { 
   ChevronRight, Users, Plus, Search, Filter, MoreVertical, 
   ShieldCheck, AlertTriangle, CheckCircle2, ShieldAlert,
-  UserCheck, UserMinus, UserX, UserPlus, GripVertical, History
+  UserCheck, UserMinus, UserX, UserPlus, GripVertical, History,
+  Copy, RefreshCw
 } from 'lucide-react';
-import { mockTournamentData } from '../data/mockTournamentOverview';
-import { mockAvailableUsers, STAFF_ROLES, STAFF_RESPONSIBILITIES } from '../data/mockStaff';
+import { mockAvailableUsers, STAFF_RESPONSIBILITIES } from '../data/mockStaff';
 import { useTournamentStaff, useAssignStaff, useRemoveStaff, useStaffActivityLog } from '../api/useStaffQueries';
+import { useGetTournament } from '../api/useTournamentQueries';
+import { useRegenerateMasterCode } from '../api/useTournamentMutations';
+import { useOrganizationMembersQuery } from '../../organizations/api/useOrganizationQueries';
 import { useAuthStore } from '../../../store/authStore';
 
 export function TournamentStaffPage() {
+  const ACTUAL_STAFF_ROLES = [
+    { id: 'tournament_dir', label: 'Tournament Director' },
+    { id: 'referee', label: 'Referee' },
+    { id: 'broadcast_prod', label: 'Broadcast Producer' }
+  ];
+
   const { tournamentId, orgSlug } = useParams();
   
   // Data hooks
+  const { data: t, isLoading: isTournamentLoading } = useGetTournament(tournamentId);
   const { data: staffList = [], isLoading } = useTournamentStaff(tournamentId);
+  
+  // Org Members for assignment
+  const { data: orgMembers = [] } = useOrganizationMembersQuery(t?.org_id || t?.orgId);
+
   const assignStaffMutation = useAssignStaff();
   const removeStaffMutation = useRemoveStaff();
+  const regenerateMutation = useRegenerateMasterCode();
 
   // State
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,7 +45,6 @@ export function TournamentStaffPage() {
   const [permissionsModal, setPermissionsModal] = useState({ isOpen: false, role: null });
   const [activityModal, setActivityModal] = useState({ isOpen: false, staff: null });
 
-  const t = mockTournamentData;
 
   // Actions
   const showToast = (msg, isError = false) => {
@@ -65,16 +79,16 @@ export function TournamentStaffPage() {
 
     // Map backend DTO to frontend format
     const mappedStaffList = staffList.map(s => ({
-      id: s.staffId,
-      userId: s.userId,
-      name: s.username,
-      email: s.email,
-      avatar: s.avatar,
-      role: s.staffRole,
-      status: s.isActive ? 'Active' : 'Inactive',
-      responsibilities: [], // Not supported by backend yet
-      assignedAt: s.assignedAt,
-      lastActive: new Date(s.assignedAt).toLocaleDateString()
+      id: s.staff_id || s.staffId,
+      userId: s.user_id || s.userId,
+      name: s.username || 'Unknown',
+      email: s.email || '',
+      avatar: s.avatar || '?',
+      role: ACTUAL_STAFF_ROLES.find(r => r.id === (s.staff_role || s.staffRole))?.label || (s.staff_role || s.staffRole),
+      status: (s.is_active || s.isActive) ? 'Active' : 'Inactive',
+      responsibilities: s.responsibilities || [],
+      assignedAt: s.assigned_at || s.assignedAt,
+      lastActive: new Date(s.assigned_at || s.assignedAt).toLocaleDateString()
     }));
 
     mappedStaffList.forEach(s => {
@@ -111,7 +125,7 @@ export function TournamentStaffPage() {
     const formData = new FormData(e.target);
     const userId = formData.get('userId');
     const role = formData.get('role');
-    const responsibilities = formData.getAll('responsibilities'); // Ignore this for now, backend doesn't take it
+    const responsibilities = formData.getAll('responsibilities');
 
     if (!role || (!assignDrawer.staff && !userId)) {
       showToast('Please select a user and role.', true);
@@ -123,9 +137,10 @@ export function TournamentStaffPage() {
     assignStaffMutation.mutate({
       tournamentId,
       staffData: {
-        userId: targetUserId,
-        staffRole: role,
-        isActive: true
+        user_id: targetUserId,
+        staff_role: role,
+        is_active: true,
+        responsibilities
       }
     }, {
       onSuccess: () => {
@@ -138,6 +153,10 @@ export function TournamentStaffPage() {
     });
   };
 
+
+  if (isTournamentLoading) {
+    return <div className="p-8 text-center text-slate-400">Loading staff data...</div>;
+  }
 
   return (
     <div className="flex flex-col min-h-screen pb-24 relative">
@@ -156,7 +175,7 @@ export function TournamentStaffPage() {
       <nav className="flex items-center text-sm text-slate-500 font-medium mb-6 px-2 lg:px-0">
         <Link to="/dashboard/organizer" className="hover:text-white transition-colors">Organizations</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
-        <Link to={`/organizations/${orgSlug}/manage/overview`} className="hover:text-white transition-colors">{t.name}</Link>
+        <Link to={`/organizations/${orgSlug}/manage/overview`} className="hover:text-white transition-colors">{t?.name || 'Tournament'}</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
         <Link to={`/manage/${tournamentId}/overview`} className="hover:text-white transition-colors">Tournaments</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
@@ -169,7 +188,7 @@ export function TournamentStaffPage() {
           <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Staff</h1>
           <p className="text-slate-400">Manage tournament staff, responsibilities, and operational access.</p>
           <div className="flex items-center gap-3 mt-4 text-sm font-medium">
-            <span className="text-white bg-slate-800 px-2 py-1 rounded">{t.name}</span>
+            <span className="text-white bg-slate-800 px-2 py-1 rounded">{t?.name || 'Tournament'}</span>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -181,6 +200,50 @@ export function TournamentStaffPage() {
           </button>
         </div>
       </header>
+
+      {/* Master Access Code */}
+      <div className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/50 mb-8 mx-0 lg:mx-0">
+        <h4 className="text-sm font-semibold text-slate-300 mb-4 border-b border-slate-700 pb-2">Master Access Code</h4>
+        <p className="text-xs text-slate-400 mb-4 max-w-3xl">
+          Distribute this unique access code to your staff. Anyone who claims it will gain full administrative access to this tournament.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <code className="bg-slate-800 px-3 py-2 rounded text-lg text-blue-400 flex-1 text-center font-mono font-bold tracking-wider">
+                {t?.master_access_code || t?.masterAccessCode || 'N/A'}
+              </code>
+              <button 
+                type="button" 
+                onClick={() => { 
+                  navigator.clipboard.writeText(t?.master_access_code || t?.masterAccessCode); 
+                  showToast('Copied!'); 
+                }} 
+                className="text-slate-400 hover:text-white p-2.5 rounded-lg hover:bg-slate-800 transition-colors" 
+                title="Copy"
+              >
+                <Copy size={20} />
+              </button>
+              <button 
+                type="button" 
+                onClick={() => {
+                  if (!tournamentId) return;
+                  regenerateMutation.mutate({ tournamentId }, {
+                    onSuccess: () => showToast('Access code regenerated')
+                  });
+                }} 
+                className="text-slate-400 hover:text-blue-400 p-2.5 rounded-lg hover:bg-slate-800 transition-colors" 
+                title="Regenerate"
+              >
+                <RefreshCw size={20} className={regenerateMutation.isPending ? "animate-spin" : ""} />
+              </button>
+            </div>
+            <p className="text-xs text-amber-500/90 bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
+              <span className="font-bold">Warning:</span> Anyone with this code will have full administrative access to edit this tournament. Do not share it publicly.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Summary Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -227,7 +290,7 @@ export function TournamentStaffPage() {
                   className="appearance-none pl-3 pr-8 py-2 bg-slate-900 border border-slate-800 rounded-lg text-sm text-white focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
                 >
                   <option value="All">All Roles</option>
-                  {STAFF_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                  {ACTUAL_STAFF_ROLES.map(r => <option key={r.id} value={r.label}>{r.label}</option>)}
                 </select>
                 <Filter className="absolute right-3 top-2.5 w-3.5 h-3.5 text-slate-500 pointer-events-none" />
               </div>
@@ -411,12 +474,12 @@ export function TournamentStaffPage() {
 
             <h3 className="font-bold text-white mb-4 text-sm uppercase tracking-wider text-slate-500">Staff by Role</h3>
             <div className="space-y-2">
-              {STAFF_ROLES.map(role => {
-                const count = staffList.filter(s => s.role === role).length;
+              {ACTUAL_STAFF_ROLES.map(roleObj => {
+                const count = staffList.filter(s => s.staffRole === roleObj.id || s.staff_role === roleObj.id).length;
                 if (count === 0) return null;
                 return (
-                  <div key={role} className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">{role}</span>
+                  <div key={roleObj.id} className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">{roleObj.label}</span>
                     <span className="text-white font-medium bg-slate-800 px-2 rounded">{count}</span>
                   </div>
                 );
@@ -430,7 +493,7 @@ export function TournamentStaffPage() {
       {/* Assign Drawer */}
       {assignDrawer.isOpen && (
         <>
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50" onClick={() => setAssignDrawer({ isOpen: false, staff: null })} />
+          <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-sm z-50" onClick={() => setAssignDrawer({ isOpen: false, staff: null })} />
           <div className="fixed inset-y-0 right-0 w-full md:w-[450px] bg-slate-900 border-l border-slate-800 shadow-2xl z-50 overflow-y-auto flex flex-col">
             <div className="p-6 border-b border-slate-800 sticky top-0 bg-slate-900 z-10 flex justify-between items-center">
               <h3 className="text-xl font-bold text-white">{assignDrawer.staff ? 'Edit Staff Assignment' : 'Assign Staff'}</h3>
@@ -456,11 +519,12 @@ export function TournamentStaffPage() {
                   ) : (
                     <select name="userId" className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 focus:border-blue-500">
                       <option value="">Select a user...</option>
-                      {mockAvailableUsers.map(u => {
-                        const isAssigned = staffList.some(s => s.userId === u.id);
+                      {orgMembers.map(u => {
+                        const userId = u.user_id || u.userId || u.id;
+                        const isAssigned = staffList.some(s => s.userId === userId || s.user_id === userId);
                         return (
-                          <option key={u.id} value={u.id} disabled={isAssigned}>
-                            {u.name} ({u.email}) {isAssigned ? '- Already assigned' : ''}
+                          <option key={userId} value={userId} disabled={isAssigned}>
+                            {u.username || u.name} ({u.email}) {isAssigned ? '- Already assigned' : ''}
                           </option>
                         );
                       })}
@@ -471,10 +535,10 @@ export function TournamentStaffPage() {
                 {/* Role Selection */}
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">Role</label>
-                  <select name="role" className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 focus:border-blue-500" defaultValue={assignDrawer.staff?.role || ''}>
+                  <select name="role" className="w-full bg-slate-950 border border-slate-800 text-white rounded-lg p-2.5 focus:border-blue-500" defaultValue={assignDrawer.staff ? ACTUAL_STAFF_ROLES.find(r => r.label === assignDrawer.staff.role)?.id : ''}>
                     <option value="" disabled>Select a role...</option>
-                    {STAFF_ROLES.map(r => (
-                      <option key={r} value={r}>{r}</option>
+                    {ACTUAL_STAFF_ROLES.map(r => (
+                      <option key={r.id} value={r.id}>{r.label}</option>
                     ))}
                   </select>
                   <p className="text-xs text-slate-500 mt-2">Roles define general access levels across the tournament.</p>
@@ -482,7 +546,20 @@ export function TournamentStaffPage() {
 
                 {/* Responsibilities */}
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Responsibilities</label>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="block text-sm font-medium text-slate-300">Responsibilities</label>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const checkboxes = document.querySelectorAll('input[name="responsibilities"]');
+                        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                        checkboxes.forEach(cb => cb.checked = !allChecked);
+                      }}
+                      className="text-xs text-blue-400 hover:text-blue-300 font-medium bg-blue-500/10 px-2 py-1 rounded transition-colors"
+                    >
+                      Select All / None
+                    </button>
+                  </div>
                   <div className="space-y-2 bg-slate-950 p-4 border border-slate-800 rounded-lg">
                     {STAFF_RESPONSIBILITIES.map(resp => (
                       <label key={resp} className="flex items-center gap-3 p-1 cursor-pointer group">
@@ -514,7 +591,7 @@ export function TournamentStaffPage() {
       {/* Delete / Deactivate Confirmation Modal */}
       {deleteModal.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setDeleteModal({ isOpen: false, type: null, staff: null })}></div>
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={() => setDeleteModal({ isOpen: false, type: null, staff: null })}></div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm relative z-10 p-6 shadow-2xl text-center">
             <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
               {deleteModal.type === 'deactivate' ? <UserMinus className="w-6 h-6 text-amber-500" /> : <UserX className="w-6 h-6 text-red-500" />}
@@ -540,7 +617,7 @@ export function TournamentStaffPage() {
       {/* View Permissions Stub Modal */}
       {permissionsModal.isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setPermissionsModal({ isOpen: false, role: null })}></div>
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={() => setPermissionsModal({ isOpen: false, role: null })}></div>
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md relative z-10 p-6 shadow-2xl">
             <div className="flex justify-between items-center mb-6">
               <div>
@@ -594,7 +671,7 @@ function ActivityLogModal({ tournamentId, staff, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm" onClick={onClose}></div>
       <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg relative z-10 p-6 shadow-2xl flex flex-col max-h-[80vh]">
         <div className="flex justify-between items-center mb-6 shrink-0">
           <div>
@@ -614,22 +691,22 @@ function ActivityLogModal({ tournamentId, staff, onClose }) {
             </div>
           ) : (
             logs.map(log => (
-              <div key={log.logId} className="flex gap-4 p-3 bg-slate-950 border border-slate-800 rounded-lg">
+              <div key={log.log_id || log.logId} className="flex gap-4 p-3 bg-slate-950 border border-slate-800 rounded-lg">
                 <div className="mt-1 shrink-0">
                   <div className="w-2 h-2 rounded-full bg-blue-500"></div>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-white font-medium">{log.actionCode}</p>
-                  <p className="text-xs text-slate-400 mt-1">{log.actionDetails}</p>
-                  {log.matchId && (
-                    <Link to={`/command-center/${tournamentId}/matches/${log.matchId}`} className="text-xs text-blue-400 hover:underline mt-2 inline-block">
+                  <p className="text-sm text-white font-medium">{log.action_code || log.actionCode}</p>
+                  <p className="text-xs text-slate-400 mt-1">{log.action_details || log.actionDetails}</p>
+                  {(log.match_id || log.matchId) && (
+                    <Link to={`/command-center/${tournamentId}/matches/${log.match_id || log.matchId}`} className="text-xs text-blue-400 hover:underline mt-2 inline-block">
                       View Match
                     </Link>
                   )}
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-[10px] text-slate-500 font-mono">
-                    {new Date(log.createdAt).toLocaleString()}
+                    {new Date(log.created_at || log.createdAt).toLocaleString()}
                   </p>
                 </div>
               </div>

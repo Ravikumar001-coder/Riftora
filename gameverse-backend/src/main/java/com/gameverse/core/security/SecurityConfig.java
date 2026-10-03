@@ -34,7 +34,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/v1/auth/register/**", "/v1/auth/login/**", "/v1/auth/verify/**", "/v1/auth/oauth/**", "/v1/auth/token/**", "/v1/public/**").permitAll()
+                .requestMatchers("/v1/auth/register/**", "/v1/auth/login/**", "/v1/auth/verify/**", "/v1/auth/oauth/**", "/v1/auth/token/**", "/v1/public/**", "/v1/games", "/v1/games/**", "/ws/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
@@ -47,7 +47,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173", "http://10.0.2.2:5173", "http://10.0.2.2:8081"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);

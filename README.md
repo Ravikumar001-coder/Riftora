@@ -22,6 +22,14 @@ cd gameverse-frontend
 npm run dev
 ```
 
+### Python Vision Worker (FastAPI)
+To run the Python Vision Worker for live OCR scoring (Port 8090):
+```bash
+cd ../vision-worker
+.\venv\Scripts\activate
+uvicorn app.main:app --reload --port 8090
+```
+
 ### End-to-End Testing (Playwright)
 To run Playwright tests:
 ```bash

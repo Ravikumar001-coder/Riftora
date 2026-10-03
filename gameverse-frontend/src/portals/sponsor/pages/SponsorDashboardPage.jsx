@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { useAuthStore } from '../../../store/authStore';
 import { sponsorDashboardData } from '../../../services/mockData';
 import { SponsorHeader } from '../components/SponsorHeader';
@@ -41,17 +40,17 @@ export function SponsorDashboardPage() {
 
   if (loading) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex items-center justify-center relative z-10">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (!data) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
           <h2 className="text-2xl font-bold text-white mb-2">No Sponsorship Campaign</h2>
           <p className="text-slate-400 text-center mb-6">This tournament does not have an active sponsorship campaign associated with your account.</p>
@@ -59,12 +58,12 @@ export function SponsorDashboardPage() {
             Return Home
           </Link>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   return (
-    <AuroraBackground>
+    <>
       <div className="min-h-screen w-full relative z-10 overflow-y-auto">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <SponsorHeader tournament={data.tournament} sponsor={data.sponsor} />
@@ -91,7 +90,7 @@ export function SponsorDashboardPage() {
           </div>
         </main>
       </div>
-    </AuroraBackground>
+    </>
   );
 }
 

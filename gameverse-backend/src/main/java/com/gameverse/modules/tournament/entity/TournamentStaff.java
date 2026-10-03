@@ -37,6 +37,9 @@ public class TournamentStaff {
     @Column(name = "assigned_at", updatable = false)
     private LocalDateTime assignedAt;
 
+    @Column(name = "responsibilities")
+    private String responsibilities;
+
     @PrePersist
     protected void onCreate() {
         assignedAt = LocalDateTime.now();

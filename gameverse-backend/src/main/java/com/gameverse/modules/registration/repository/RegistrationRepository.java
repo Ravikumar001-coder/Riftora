@@ -15,6 +15,15 @@ public interface RegistrationRepository extends JpaRepository<Registration, Stri
     Optional<Registration> findByTournament_TournamentIdAndTeam_TeamId(String tournamentId, String teamId);
     Page<Registration> findByTournament_TournamentId(String tournamentId, Pageable pageable);
     Page<Registration> findByTeam_TeamId(String teamId, Pageable pageable);
+    long countByTournament_TournamentIdAndStatus(String tournamentId, Registration.RegistrationStatus status);
     long countByTournament_TournamentIdAndStatusIn(String tournamentId, java.util.List<Registration.RegistrationStatus> statuses);
     java.util.List<Registration> findByTournament_TournamentIdAndStatus(String tournamentId, Registration.RegistrationStatus status);
+    
+    long countByTournament_Organization_OrgIdAndStatus(String orgId, Registration.RegistrationStatus status);
+
+    @org.springframework.data.jpa.repository.Query("SELECT r.team.teamId, COUNT(DISTINCT r.tournament.tournamentId) " +
+           "FROM Registration r " +
+           "WHERE r.tournament.organization.orgId = :orgId AND r.status = 'approved' " +
+           "GROUP BY r.team.teamId")
+    java.util.List<Object[]> countTournamentsPerTeamByOrg(@org.springframework.data.repository.query.Param("orgId") String orgId);
 }

@@ -3,7 +3,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { authService } from '../../../../features/auth/api/auth.service';
-import { AuroraBackground } from '../../../../components/ui/aurora-background';
 import logo from '../../../../assets/logo.png';
 
 export function VerifyEmailPage() {
@@ -39,7 +38,7 @@ export function VerifyEmailPage() {
   const isError = verifyMutation.isError || isMissingToken;
 
   return (
-    <AuroraBackground>
+    <>
       <div className="min-h-screen w-full flex flex-col relative z-10 px-6 sm:px-12 py-8">
         
         {/* Header */}
@@ -127,6 +126,6 @@ export function VerifyEmailPage() {
           © {new Date().getFullYear()} Riftora Esports. All rights reserved.
         </footer>
       </div>
-    </AuroraBackground>
+    </>
   );
 }

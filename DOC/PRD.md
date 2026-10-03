@@ -53,6 +53,7 @@
 ### 4. 🎥 Production & Stream Control Panel
 - Module 12 — LIVE STREAMING & BROADCAST INTEGRATION
 - Module 13 — OBS OVERLAY SYSTEM
+- Module 22 — COMPUTER VISION & OCR LIVE SCORING SUBSYSTEM
 
 ---
 
@@ -5673,4 +5674,140 @@ OBS Studio
 ---
 
 
+---
 
+# MODULE 22 — COMPUTER VISION & OCR LIVE SCORING SUBSYSTEM
+
+---
+
+## 22.1 Module Overview
+
+| Attribute | Detail |
+|-----------|--------|
+| **Module ID** | MOD-22 |
+| **Priority** | 🟠 P1 — High |
+| **Description** | A production-oriented OCR / Computer Vision Live Match Intelligence subsystem utilizing a Python worker to consume live game feeds (e.g. BGMI, Free Fire MAX) and detect structured match events without acting as the definitive scoring authority. |
+| **Primary Users** | ROLE-05 (Referee / Operator), ROLE-06 (Broadcast Producer) |
+| **Dependencies** | MOD-09 (Match Day Operations), MOD-10 (Live Scoring), MOD-21 (Command Center) |
+| **Estimated Complexity** | Very High |
+
+---
+
+## 22.2 User Stories
+
+| ID | User Story | Priority |
+|----|-----------|---------|
+| US-22-001 | As a **Referee / Operator**, I want to configure the Live Feed source (OBS, RTMP, SRT, local capture) for a match so that the CV system can analyze it. | 🔴 P0 |
+| US-22-002 | As a **Referee / Operator**, I want to define and adjust ROI (Region of Interest) coordinates for specific game UI elements (e.g., kill feed, placement) so that the OCR worker only processes necessary pixels. | 🔴 P0 |
+| US-22-003 | As a **Tournament Organizer**, I want the computer vision worker to extract game events automatically and pass them to the backend as candidate events, so that scoring requires less manual entry. | 🔴 P0 |
+| US-22-004 | As a **System Admin**, I want to be able to switch OCR engines (e.g., PaddleOCR, Tesseract, EasyOCR) so that I can optimize for speed vs. accuracy. | 🟠 P1 |
+| US-22-005 | As a **Referee / Operator**, I want to configure game-specific profiles (e.g., BGMI, Free Fire MAX) so that the vision pipeline knows exactly what to look for and how to parse it. | 🔴 P0 |
+
+---
+
+## 22.3 Functional Requirements
+
+### 22.3.1 OCR Python Worker Architecture
+
+| ID | Requirement | Priority |
+|----|------------|---------|
+| FR-22-001 | The system **shall** utilize a dedicated Python-based vision worker running OpenCV. It must not reside inside the Java Spring Boot monolith. | 🔴 P0 |
+| FR-22-002 | The worker **shall** consume preconfigured Match Contexts (mapping Match -> Game -> Live Source -> ROI config -> Match Slot Mapping). | 🔴 P0 |
+| FR-22-003 | The worker **shall** support extensible live sources: OBS capture, RTMP, SRT, local video, and screen capture. | 🟠 P1 |
+| FR-22-004 | The worker **shall** use a Game Profile System (e.g., `BGMIProfile`, `FreeFireProfile`) to abstract regions, patterns, preprocessing, and detection logic. | 🔴 P0 |
+| FR-22-005 | The worker **shall** employ a pluggable OCR Engine (e.g., PaddleOCR as primary, Tesseract/EasyOCR as fallback). | 🟠 P1 |
+
+### 22.3.2 Computer Vision Pipeline & Preprocessing
+
+| ID | Requirement | Priority |
+|----|------------|---------|
+| FR-22-006 | The worker **shall** sample frames dynamically (e.g., 5-15 FPS) instead of processing every frame, to optimize latency and performance. | 🔴 P0 |
+| FR-22-007 | The worker **shall** restrict OCR processing purely to configured ROIs using normalized coordinates instead of full-frame scanning. | 🔴 P0 |
+| FR-22-008 | The worker **shall** preprocess regions before OCR (e.g., upscale, grayscale, contrast enhancement, thresholding) according to the active game profile. | 🟠 P1 |
+
+### 22.3.3 Event Detection & Identity Resolution
+
+| ID | Requirement | Priority |
+|----|------------|---------|
+| FR-22-009 | The system **shall** resolve identity primarily through a pre-loaded Match Slot Map (`matchId + slotNumber`) rather than purely relying on fuzzy text matching for player names. | 🔴 P0 |
+| FR-22-010 | The worker **shall** perform Temporal Validation, confirming an event across multiple subsequent frames before generating a candidate event. | 🔴 P0 |
+| FR-22-011 | The system **shall** generate structured candidate events for supported event types (e.g., `PLAYER_KILL`, `TEAM_ELIMINATION`). | 🔴 P0 |
+| FR-22-012 | The worker **shall** assign a deterministic fingerprint for each event to prevent duplicate submissions. | 🔴 P0 |
+
+---
+
+## 22.4 Business Rules
+
+| ID | Business Rule |
+|----|--------------|
+| BR-22-001 | **Never Trust OCR as the Scoring Authority.** The Python worker shall only publish *candidate events*. The Spring Boot backend owns validation, authorization, scoring, match state, deduplication, and database persistence. |
+| BR-22-002 | **No Direct Database/Redis Updates from OCR.** The worker shall never directly update the scoring MySQL tables or the Redis leaderboard state. |
+| BR-22-003 | **Identity Boundary.** The system must treat `matchId + slotNumber` as the global identity boundary, not just the slot number, to avoid collisions across different matches. |
+
+---
+
+## 22.5 UI/UX Requirements
+
+| ID | Requirement |
+|----|------------|
+| UX-22-001 | Command Center must feature a "Live Feed Configuration" panel inside Match Operations to map Slots to Teams/Players, set ROI profiles, and select the streaming source. |
+| UX-22-002 | Operators should be able to visualize and test ROI boundaries on a sample frame from the stream within the Command Center UI. |
+| UX-22-003 | The scoring dashboard must display incoming candidate events from the OCR worker, allowing the operator to approve, edit, or reject them. |
+
+---
+
+## 22.6 Data Requirements
+
+### 22.6.1 Match Context Schema (Pre-Loaded into Worker)
+
+```json
+{
+  "sessionId": "live_8f92",
+  "matchId": "match_103",
+  "game": "BGMI",
+  "slots": {
+    "01": {
+      "teamId": "team_101",
+      "teamName": "Team Alpha",
+      "players": {
+        "AlphaP1": "player_101"
+      }
+    }
+  }
+}
+```
+
+### 22.6.2 Event Contract (Worker -> Ingestion API)
+
+```json
+{
+  "schemaVersion": 1,
+  "eventId": "evt_01J...",
+  "matchId": "match_103",
+  "eventType": "PLAYER_KILL",
+  "killer": { "slot": 5, "playerId": "player_501", "confidence": 0.97 },
+  "victim": { "slot": 6, "playerId": "player_601", "confidence": 0.95 },
+  "evidence": { "frameTimestamp": 18342.52, "roi": { "x": 0.72, "y": 0.08, "width": 0.25, "height": 0.35 } },
+  "confidence": 0.96
+}
+```
+
+---
+
+## 22.7 Edge Cases & Error States
+
+| Scenario | Expected Behavior |
+|----------|------------------|
+| Stream lags or drops frames | Worker pauses event generation, logs drop in feed, resumes cleanly upon feed return without missing historical buffers if provided by the source. |
+| Fuzzy match fails and slot is unknown | Worker logs candidate event with "Unknown Identity", forcing manual resolution by the Operator on the Command Center UI. |
+| High rate of duplicate events from repeated frames | Temporal validation and deterministic fingerprinting (hash of matchId, eventType, timestampWindow) prevents duplication before reaching Spring Boot. |
+
+---
+
+## 22.8 Acceptance Criteria
+
+| ID | Criterion | Test Method |
+|----|-----------|-------------|
+| AC-22-001 | A pre-recorded video feed processed by the worker successfully generates candidate kill events without directly mutating the database. | E2E test |
+| AC-22-002 | Candidate events are correctly deduplicated by the Spring Boot backend when the worker sends identical fingerprint events within a short timeframe. | Automated integration test |
+| AC-22-003 | Live Feed Configuration in Command Center accurately builds and sends the Match Context JSON to the worker. | Manual QA |

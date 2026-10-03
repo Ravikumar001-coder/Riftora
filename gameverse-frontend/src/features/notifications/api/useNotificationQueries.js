@@ -1,21 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api/v1';
-
-const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    Authorization: `Bearer ${token}`
-  };
-};
+import { api } from '../../../services/api';
 
 export const useNotifications = (unreadOnly = false, page = 0, limit = 20) => {
   return useQuery({
     queryKey: ['notifications', unreadOnly, page, limit],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/notifications`, {
-        headers: getHeaders(),
+      const response = await api.get('/notifications', {
         params: { unreadOnly, page, limit }
       });
       return response.data.data;
@@ -27,9 +17,7 @@ export const useUnreadNotificationCount = () => {
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const response = await axios.get(`${API_URL}/notifications/unread-count`, {
-        headers: getHeaders()
-      });
+      const response = await api.get('/notifications/unread-count');
       return response.data.data;
     },
     refetchInterval: 60000 // Refetch every minute as fallback
@@ -41,9 +29,7 @@ export const useMarkNotificationRead = () => {
 
   return useMutation({
     mutationFn: async (notificationId) => {
-      const response = await axios.put(`${API_URL}/notifications/${notificationId}/read`, {}, {
-        headers: getHeaders()
-      });
+      const response = await api.put(`/notifications/${notificationId}/read`);
       return response.data;
     },
     onSuccess: () => {
@@ -57,9 +43,7 @@ export const useMarkAllNotificationsRead = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await axios.put(`${API_URL}/notifications/read-all`, {}, {
-        headers: getHeaders()
-      });
+      const response = await api.put('/notifications/read-all');
       return response.data;
     },
     onSuccess: () => {
@@ -73,9 +57,7 @@ export const useDeleteNotification = () => {
 
   return useMutation({
     mutationFn: async (notificationId) => {
-      const response = await axios.delete(`${API_URL}/notifications/${notificationId}`, {
-        headers: getHeaders()
-      });
+      const response = await api.delete(`/notifications/${notificationId}`);
       return response.data;
     },
     onSuccess: () => {

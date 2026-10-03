@@ -24,46 +24,11 @@ export const authService = {
    * @returns {Promise<Object>} The API response containing tokens and user data
    */
   async loginWithEmail({ email, password }) {
-    // MOCK IMPLEMENTATION: Intercepting network call to simulate roles
-    await new Promise(resolve => setTimeout(resolve, 800)); // Simulate latency
-
-    let mockUser = {
-      id: 'mock-uuid',
-      email: email,
-      username: email.split('@')[0],
-      is_email_verified: true,
-      roles: ['Player'],
-      onboarding_path: 'player',
-      onboarding_completed: true
-    };
-
-    if (email === 'admin@riftora.com') {
-      mockUser.roles = ['Super Admin'];
-      mockUser.onboarding_path = 'admin';
-    } else if (email === 'org@riftora.com') {
-      mockUser.roles = ['Org Owner'];
-      mockUser.onboarding_path = 'organizer';
-      mockUser.org_roles = ['Owner'];
-    } else if (email === 'player@riftora.com') {
-      mockUser.roles = ['Player'];
-    } else if (email === 'sponsor@riftora.com') {
-      mockUser.roles = ['SPONSOR_REP'];
-      mockUser.onboarding_path = 'sponsor';
-      mockUser.onboarding_completed = true;
-    } else if (email === 'producer@riftora.com') {
-      mockUser.roles = ['B. Producer', 'T. Director'];
-      mockUser.onboarding_path = 'producer';
-      mockUser.onboarding_completed = true;
-    }
-
-    return {
-      success: true,
-      data: {
-        access_token: 'mock.access.token',
-        refresh_token: 'mock.refresh.token',
-        user: mockUser
-      }
-    };
+    const response = await api.post('/auth/login/email', {
+      email,
+      password,
+    });
+    return response.data;
   },
 
   /**

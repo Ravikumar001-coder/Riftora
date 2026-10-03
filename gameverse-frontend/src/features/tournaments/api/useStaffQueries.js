@@ -5,7 +5,7 @@ export const useTournamentStaff = (tournamentId) => {
   return useQuery({
     queryKey: ['tournament-staff', tournamentId],
     queryFn: async () => {
-      const response = await api.get(`/v1/tournaments/${tournamentId}/staff`);
+      const response = await api.get(`/tournaments/${tournamentId}/staff`);
       return response.data; // List<TournamentStaffDto>
     },
     enabled: !!tournamentId,
@@ -17,7 +17,7 @@ export const useAssignStaff = () => {
 
   return useMutation({
     mutationFn: async ({ tournamentId, staffData }) => {
-      const response = await api.post(`/v1/tournaments/${tournamentId}/staff`, staffData);
+      const response = await api.post(`/tournaments/${tournamentId}/staff`, staffData);
       return response.data;
     },
     onSuccess: (data, variables) => {
@@ -31,7 +31,7 @@ export const useRemoveStaff = () => {
 
   return useMutation({
     mutationFn: async ({ tournamentId, staffId }) => {
-      await api.delete(`/v1/tournaments/${tournamentId}/staff/${staffId}`);
+      await api.delete(`/tournaments/${tournamentId}/staff/${staffId}`);
       return { tournamentId, staffId };
     },
     onSuccess: (data) => {
@@ -44,7 +44,7 @@ export const useStaffActivityLog = (tournamentId, staffUserId, page = 0, size = 
   return useQuery({
     queryKey: ['staff-activity-log', tournamentId, staffUserId, page, size],
     queryFn: async () => {
-      const response = await api.get(`/v1/tournaments/${tournamentId}/staff/${staffUserId}/logs`, {
+      const response = await api.get(`/tournaments/${tournamentId}/staff/${staffUserId}/logs`, {
         params: { page, size }
       });
       return response.data; // Page<StaffActivityLogDto>

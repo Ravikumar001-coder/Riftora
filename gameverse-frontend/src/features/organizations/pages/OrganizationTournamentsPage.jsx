@@ -5,8 +5,8 @@ import {
   Archive, Edit, Copy, ChevronLeft, ChevronRight,
   Eye, Radio, Users, CheckCircle2, AlertTriangle, ExternalLink
 } from 'lucide-react';
-import { mockTournaments } from '../../../portals/organizer/data/mockTournaments';
-import { organizerDashboardData } from '../../../portals/organizer/data/mockOrganizerData';
+import { useOrganizationTournaments } from '../api/useOrganizationTournaments';
+import { useOrganizationBySlugQuery } from '../api/useOrganizationQueries';
 
 const STATUS_TABS = ['All', 'DRAFT', 'UPCOMING', 'LIVE', 'COMPLETED', 'ARCHIVED'];
 const GAMES = ['All Games', 'BGMI', 'Free Fire MAX', 'PUBG', 'Valorant'];
@@ -43,7 +43,27 @@ export function OrganizationTournamentsPage() {
   const { orgSlug } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const [tournaments, setTournaments] = useState(mockTournaments);
+  const { data: orgData } = useOrganizationBySlugQuery(orgSlug);
+  const orgId = orgData?.org_id;
+  const { data: apiTournaments = [], isLoading } = useOrganizationTournaments(orgId);
+  
+  const tournaments = React.useMemo(() => {
+    return apiTournaments.map(t => ({
+      id: t.tournament_id,
+      name: t.name,
+      slug: t.slug,
+      game: t.game_name || t.game_id || 'Unknown',
+      format: t.format,
+      startDate: t.start_date || t.created_at,
+      status: t.status,
+      capacity: t.max_teams || t.max_participants || 0,
+      registrations: t.registered_teams || t.registered_participants || 0,
+      prizePool: t.prize_pool || 0,
+      currency: t.currency || 'INR',
+      organizationSlug: orgSlug
+    }));
+  }, [apiTournaments, orgSlug]);
+
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [tournamentToArchive, setTournamentToArchive] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
@@ -93,9 +113,8 @@ export function OrganizationTournamentsPage() {
 
   const confirmArchive = () => {
     if (tournamentToArchive) {
-      setTournaments(prev => prev.map(t => 
-        t.id === tournamentToArchive.id ? { ...t, status: 'ARCHIVED' } : t
-      ));
+      // TODO: Call API to archive tournament
+      // await api.post(`/v1/tournaments/${tournamentToArchive.id}/archive`);
       setIsArchiveModalOpen(false);
       setTournamentToArchive(null);
       // Optional: Add toast notification call here if toast context is available
@@ -105,7 +124,7 @@ export function OrganizationTournamentsPage() {
   // Derived state
   const filteredTournaments = useMemo(() => {
     return tournaments
-      .filter(t => t.organizationSlug === orgSlug || orgSlug === 'hydra-esports') // Ensure context matching
+      .filter(t => t.organizationSlug === orgSlug) // Ensure context matching
       .filter(t => activeTab === 'All' || t.status === activeTab)
       .filter(t => gameFilter === 'All Games' || t.game === gameFilter)
       .filter(t => typeFilter === 'All Types' || t.format === typeFilter)
@@ -142,10 +161,7 @@ export function OrganizationTournamentsPage() {
     currentPage * itemsPerPage
   );
 
-  // Organization name fallback
-  const orgName = organizerDashboardData.organization.slug === orgSlug 
-    ? organizerDashboardData.organization.name 
-    : (orgSlug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+  const orgName = orgData?.org_name || (orgSlug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -166,7 +182,7 @@ export function OrganizationTournamentsPage() {
           <p className="text-slate-400">Create, manage, and monitor all tournaments belonging to this organization.</p>
         </div>
         <Link 
-          to="/manage/t1/overview" 
+          to={`/organizations/${orgSlug}/manage/tournaments/new`}
           className="shrink-0 px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] flex items-center gap-2"
         >
           <Trophy className="w-5 h-5" />
@@ -526,7 +542,7 @@ export function OrganizationTournamentsPage() {
                   <h3 className="text-lg font-bold text-white mb-2">No tournaments yet</h3>
                   <p className="text-slate-400 max-w-sm mb-6">Create your first tournament and start organizing competitive events on Riftora.</p>
                   <Link 
-                    to="/manage/t1/overview" 
+                    to={`/organizations/${orgSlug}/manage/tournaments/new`}
                     className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-colors"
                   >
                     Create Tournament

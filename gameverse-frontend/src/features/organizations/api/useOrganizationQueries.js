@@ -47,3 +47,12 @@ export const usePlansQuery = () => {
     queryFn: () => organizationService.getPlans(),
   });
 };
+
+export const useDashboardStatsQuery = (orgId) => {
+  return useQuery({
+    queryKey: ['organizations', orgId, 'dashboard-stats'],
+    queryFn: () => organizationService.getDashboardStats(orgId),
+    enabled: !!orgId,
+  });
+};
+

@@ -6,7 +6,7 @@ import {
   ShieldAlert, XCircle, Zap, Building2, HardDrive, Users, Check
 } from 'lucide-react';
 import { mockBillingData, availablePlans } from '../../../portals/organizer/data/mockBilling';
-import { organizerDashboardData } from '../../../portals/organizer/data/mockOrganizerData';
+
 import { usePlansQuery, useOrganizationBySlugQuery } from '../api/useOrganizationQueries';
 import { useOrganizationMutations } from '../api/useOrganizationMutations';
 
@@ -48,9 +48,7 @@ export function OrganizationBillingPage() {
   };
 
   // Organization name fallback
-  const orgName = organizerDashboardData.organization.slug === orgSlug 
-    ? organizerDashboardData.organization.name 
-    : (orgSlug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+  const orgName = orgProfile?.org_name || (orgSlug?.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
 
   // Determine current user's role (Mocked as Owner for this view)
   const isOwner = true;

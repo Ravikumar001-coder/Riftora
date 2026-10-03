@@ -1,7 +1,9 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.gameverse.gg/v1';
+let BASE_URL = import.meta.env.VITE_API_URL || 'https://api.gameverse.gg/v1';
+
+// ADB Reverse handles port forwarding, so we keep localhost as is
 
 export const api = axios.create({
   baseURL: BASE_URL,
@@ -21,4 +23,13 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// We could also add response interceptors for token refresh here later.
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      useAuthStore.getState().logout();
+      window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
+  }
+);

@@ -45,6 +45,10 @@ public class Tournament {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "game_config_template_id")
+    private GameConfigurationTemplate gameConfigTemplate;
+
     // Basic Info
     @Column(name = "name", length = 200, nullable = false)
     private String name;
@@ -143,7 +147,8 @@ public class Tournament {
         BEST_SINGLE_MATCH_RANK,
         BEST_SINGLE_MATCH_POINTS,
         FEWEST_LAST_PLACE_FINISHES,
-        HEAD_TO_HEAD
+        HEAD_TO_HEAD,
+        MOST_WINS
     }
 
     @JdbcTypeCode(SqlTypes.JSON)
@@ -152,10 +157,10 @@ public class Tournament {
 
     // Dates
     @Column(name = "start_date")
-    private LocalDate startDate;
+    private LocalDateTime startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private LocalDateTime endDate;
 
     @Column(name = "registration_open")
     private LocalDateTime registrationOpen;
@@ -218,6 +223,9 @@ public class Tournament {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "scheduled_publish_date")
+    private LocalDateTime scheduledPublishDate;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
@@ -243,6 +251,10 @@ public class Tournament {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    // Staff Access Codes
+    @Column(name = "master_access_code", length = 50, unique = true)
+    private String masterAccessCode;
 
     // FR-16-005: Winner Confirmation
     @Column(name = "winners_confirmed")
@@ -271,10 +283,10 @@ public class Tournament {
     private Boolean isPostponed = false;
 
     @Column(name = "original_start_date")
-    private LocalDate originalStartDate;
+    private LocalDateTime originalStartDate;
 
     @Column(name = "original_end_date")
-    private LocalDate originalEndDate;
+    private LocalDateTime originalEndDate;
 
     @Column(name = "postponement_reason", columnDefinition = "TEXT")
     private String postponementReason;

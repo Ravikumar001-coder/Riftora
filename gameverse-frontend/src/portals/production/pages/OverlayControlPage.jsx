@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTournament } from '../../../features/tournaments/api/useTournament';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { Loader2, AlertCircle, Save, RotateCcw, MonitorPlay, CheckCircle2 } from 'lucide-react';
 import { OverlayHeader } from '../components/overlays/OverlayHeader';
 import { OverlaySelector } from '../components/overlays/OverlaySelector';
@@ -187,18 +186,18 @@ export function OverlayControlPage() {
 
   if (isLoading) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
           <Loader2 className="w-10 h-10 text-blue-500 animate-spin mb-6" />
           <h2 className="text-xl font-bold text-white mb-2">Loading Workspace...</h2>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (isError || !tournament) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
           <div className="bg-slate-900/80 backdrop-blur border border-slate-800 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -214,7 +213,7 @@ export function OverlayControlPage() {
             </Link>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 

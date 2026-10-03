@@ -1,6 +1,5 @@
 import React from 'react';
 import { useParams, useNavigate, Navigate, Link } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { Button } from '../../../components/ui/button';
 import { Badge } from '../../../components/ui/badge';
 import { CheckCircle2, ArrowLeft, Clock, Shield, Users } from 'lucide-react';
@@ -28,28 +27,28 @@ export function MyRegistrationPage() {
 
   if (isTourneyLoading || isRegistrationLoading || isRosterLoading || isMatchesLoading) {
     return (
-      <AuroraBackground>
+      <>
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (!tournament) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <h1 className="text-2xl font-bold text-white mb-2">Tournament not found</h1>
           <Button onClick={() => navigate('/explore')}>Back to Explore</Button>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (!registration) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <h1 className="text-2xl font-bold text-white mb-2">No Registration Found</h1>
           <p className="text-slate-400 mb-8">You haven't registered any teams for this tournament yet.</p>
@@ -62,12 +61,12 @@ export function MyRegistrationPage() {
             </Button>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   return (
-    <AuroraBackground className="min-h-screen bg-slate-950 pb-20">
+    <>
       <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 border-b border-slate-800 bg-slate-900/50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
@@ -227,6 +226,6 @@ export function MyRegistrationPage() {
         </div>
 
       </div>
-    </AuroraBackground>
+    </>
   );
 }

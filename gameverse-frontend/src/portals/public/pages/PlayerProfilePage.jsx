@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { PlayerHero } from '../components/player/PlayerHero';
 import { PlayerStats } from '../components/player/PlayerStats';
 import { PlayerTabs } from '../components/player/PlayerTabs';
@@ -33,7 +32,7 @@ export function PlayerProfilePage() {
     
     if (status === 403) {
       return (
-        <AuroraBackground>
+        <>
           <div className="container mx-auto px-4 py-20 min-h-screen flex flex-col items-center justify-center text-center">
             <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
               <Shield className="w-10 h-10 text-slate-400" />
@@ -51,12 +50,12 @@ export function PlayerProfilePage() {
               </Link>
             </div>
           </div>
-        </AuroraBackground>
+        </>
       );
     }
 
     return (
-      <AuroraBackground>
+      <>
         <div className="container mx-auto px-4 py-20 min-h-screen flex flex-col items-center justify-center text-center">
           <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
             <AlertCircle className="w-10 h-10 text-slate-400" />
@@ -74,7 +73,7 @@ export function PlayerProfilePage() {
             </Link>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
@@ -173,7 +172,7 @@ export function PlayerProfilePage() {
   };
 
   return (
-    <AuroraBackground showRadialGradient={false}>
+    <>
       <div className="min-h-screen pb-20 w-full overflow-x-hidden">
         <PlayerHero player={player || {}} isLoading={isLoadingPlayer} />
         
@@ -192,6 +191,6 @@ export function PlayerProfilePage() {
           </div>
         )}
       </div>
-    </AuroraBackground>
+    </>
   );
 }

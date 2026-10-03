@@ -7,9 +7,9 @@ export function QuickActions({ role, orgSlug }) {
   const isAdminOrOwner = isOwner || role === 'Org Admin';
 
   const actions = [
-    { name: 'Create Tournament', path: '/manage/t1/overview', icon: PlusCircle, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { name: 'Create Tournament', path: `/organizations/${orgSlug}/manage/tournaments/new`, icon: PlusCircle, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     { name: 'Invite Staff', path: `/organizations/${orgSlug}/manage/members`, icon: UserPlus, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { name: 'Rules Config', path: '/manage/t1/settings', icon: FileText, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { name: 'Rules Config', path: '/manage/t1/rules', icon: FileText, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     { name: 'Manage Org', path: `/organizations/${orgSlug}/manage/settings`, icon: Settings, color: 'text-slate-400', bg: 'bg-slate-800' },
   ];
 
@@ -22,13 +22,13 @@ export function QuickActions({ role, orgSlug }) {
   }
 
   return (
-    <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden mb-8">
+    <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden flex-1 flex flex-col h-full">
       <div className="p-5 sm:p-6 border-b border-slate-800/60">
         <span className="text-sm font-bold text-slate-300 tracking-wider">QUICK ACTIONS</span>
       </div>
       
-      <div className="p-5 sm:p-6">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="p-5 sm:p-6 flex-1 flex flex-col justify-center">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {actions.map((action, index) => (
             <Link 
               key={index} 

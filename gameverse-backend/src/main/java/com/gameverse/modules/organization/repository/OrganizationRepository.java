@@ -12,5 +12,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Stri
     java.util.Optional<Organization> findByOrgSlug(String orgSlug);
     java.util.Optional<Organization> findByCustomSubdomain(String customSubdomain);
     long countByOwner_UserId(String ownerUserId);
+    java.util.List<Organization> findAllByOwner_UserId(String ownerUserId);
     Page<Organization> findByOwner_UserId(String ownerUserId, Pageable pageable);
 }

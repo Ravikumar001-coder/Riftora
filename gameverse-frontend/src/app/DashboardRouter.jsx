@@ -2,12 +2,11 @@ import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthGuard } from '../features/auth/components/AuthGuard';
 import { useAuthStore } from '../store/authStore';
-import { AuroraBackground } from '../components/ui/aurora-background';
 import { Loader2, AlertCircle } from 'lucide-react';
 import logo from '../assets/logo.png';
 
 const DashboardLoadingState = () => (
-  <AuroraBackground>
+  <>
     <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
       <div className="w-full max-w-sm bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 p-10 rounded-3xl shadow-2xl shadow-black/50 flex flex-col items-center text-center animate-pulse">
         <img src={logo} alt="Riftora Logo" className="h-10 w-auto object-contain brightness-150 saturate-150 mb-8" />
@@ -16,12 +15,12 @@ const DashboardLoadingState = () => (
         <p className="text-slate-400 text-sm">Loading</p>
       </div>
     </div>
-  </AuroraBackground>
+  </>
 );
 
 const DashboardFallbackState = () => {
   return (
-    <AuroraBackground>
+    <>
       <div className="min-h-screen w-full flex flex-col items-center justify-center relative z-10 p-6">
         <div className="w-full max-w-sm bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 p-10 rounded-3xl shadow-2xl shadow-black/50 flex flex-col items-center text-center">
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
@@ -39,7 +38,7 @@ const DashboardFallbackState = () => {
           </Link>
         </div>
       </div>
-    </AuroraBackground>
+    </>
   );
 };
 
@@ -74,8 +73,14 @@ export function DashboardRouter() {
       return;
     }
 
+    const hasOrgRoles = (user.orgRoles && user.orgRoles.length > 0) || (user.org_roles && user.org_roles.length > 0);
+
+    if (import.meta.env.DEV) {
+      console.log(`[ROUTER] AUTH: true → USER: ${user.username} → ORG MEMBERSHIP: ${hasOrgRoles} → ONBOARDING STATE: ${user.onboarding_completed}`);
+    }
+
     // 3. Organizer Onboarding incomplete
-    if (user.onboarding_path === 'organizer' && (!user.onboarding_completed || !user.org_roles || user.org_roles.length === 0)) {
+    if (user.onboarding_path === 'organizer' && (!user.onboarding_completed || !hasOrgRoles)) {
       navigate('/onboarding/organizer', { replace: true });
       return;
     }
@@ -88,7 +93,12 @@ export function DashboardRouter() {
 
     // 5. Fully Onboarded Role Dashboards
     if (user.onboarding_path === 'organizer' && user.onboarding_completed) {
-      navigate('/dashboard/organizer', { replace: true });
+      if (hasOrgRoles) {
+        navigate('/dashboard/select-org', { replace: true });
+      } else {
+        // Fallback in case of inconsistencies
+        navigate('/onboarding/organizer', { replace: true });
+      }
       return;
     }
 

@@ -17,17 +17,27 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
-import { organizerDashboardData } from '../../../portals/organizer/data/mockOrganizerData';
+import { useAuthStore } from '../../../store/authStore';
+import { useOrganizationBySlugQuery, useDashboardStatsQuery } from '../api/useOrganizationQueries';
 
 export function OrganizationOverviewPage() {
   const { orgSlug } = useParams();
   
-  // Use mock data, pretend we loaded it by orgSlug
-  const { organization, stats, activeTournaments, upcomingSchedule, actionRequired, activity } = organizerDashboardData;
+  const { user } = useAuthStore();
+  const { data: orgData } = useOrganizationBySlugQuery(orgSlug);
+  const orgId = orgData?.org_id;
+  const { data: dynamicStats } = useDashboardStatsQuery(orgId);
 
   // Determine actual rendered org name for fallback
-  const orgName = organization?.slug === orgSlug ? organization.name : (orgSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
-  const role = organization?.role || 'Org Admin';
+  const orgName = orgData?.org_name || (orgSlug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
+  const role = user?.orgRoles?.[0]?.role?.replace('org_', 'Org ') || 'Org Owner';
+
+  const stats = dynamicStats?.stats || { active_tournaments: 0, upcoming_tournaments: 0, pending_registrations: 0, live_events: 0 };
+  const activeTournaments = dynamicStats?.active_tournaments || [];
+  const upcomingSchedule = dynamicStats?.upcoming_schedule || [];
+  const actionRequired = dynamicStats?.action_required || [];
+  const activity = dynamicStats?.activity || [];
+  const registrationOverview = dynamicStats?.registration_overview || { pending: 0, approved: 0, waitlisted: 0 };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -90,12 +100,12 @@ export function OrganizationOverviewPage() {
             <Trophy className="w-16 h-16 text-blue-500" />
           </div>
           <p className="text-slate-400 text-sm font-medium mb-1">Total Tournaments</p>
-          <p className="text-3xl font-black text-white">{organization.totalTournaments}</p>
+          <p className="text-3xl font-black text-white">{dynamicStats?.performance?.tournaments || 0}</p>
         </Link>
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
           <p className="text-slate-400 text-sm font-medium mb-1">Active Now</p>
           <div className="flex items-end gap-3">
-            <p className="text-3xl font-black text-white">{stats.activeTournaments}</p>
+            <p className="text-3xl font-black text-white">{stats.active_tournaments}</p>
             <span className="text-xs font-bold text-emerald-400 mb-1 flex items-center gap-1">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               LIVE
@@ -107,11 +117,11 @@ export function OrganizationOverviewPage() {
             <Users className="w-16 h-16 text-blue-500" />
           </div>
           <p className="text-slate-400 text-sm font-medium mb-1">Organization Members</p>
-          <p className="text-3xl font-black text-white">{organization.staffCount}</p>
+          <p className="text-3xl font-black text-white">{orgData?.member_count || 0}</p>
         </Link>
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
           <p className="text-slate-400 text-sm font-medium mb-1">Total Registrations</p>
-          <p className="text-3xl font-black text-white">{organization.totalParticipants}</p>
+          <p className="text-3xl font-black text-white">{dynamicStats?.performance?.total_participants || 0}</p>
         </div>
       </div>
 
@@ -146,14 +156,14 @@ export function OrganizationOverviewPage() {
                         </span>
                       </div>
                       <p className="text-sm text-slate-400">
-                        {tournament.currentTeams} / {tournament.maxTeams} Teams registered
+                        {tournament.current_teams} / {tournament.max_teams} Teams registered
                       </p>
                     </div>
                     <Link 
                       to={tournament.link}
                       className="shrink-0 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium text-sm rounded-lg transition-colors"
                     >
-                      {tournament.nextAction}
+                      {tournament.next_action}
                     </Link>
                   </div>
                 ))}
@@ -252,15 +262,15 @@ export function OrganizationOverviewPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-300">Total Pending</span>
-                <span className="text-sm font-bold text-amber-500">{organizerDashboardData.registrationOverview.pending}</span>
+                <span className="text-sm font-bold text-amber-500">{registrationOverview.pending}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-300">Approved</span>
-                <span className="text-sm font-bold text-white">{organizerDashboardData.registrationOverview.approved}</span>
+                <span className="text-sm font-bold text-white">{registrationOverview.approved}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-300">Waitlisted</span>
-                <span className="text-sm font-bold text-slate-400">{organizerDashboardData.registrationOverview.waitlisted}</span>
+                <span className="text-sm font-bold text-slate-400">{registrationOverview.waitlisted}</span>
               </div>
               <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                 <span className="text-xs text-slate-500">From 4 active tournaments</span>

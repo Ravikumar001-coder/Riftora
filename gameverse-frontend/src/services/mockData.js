@@ -57,6 +57,7 @@ export const exploreTournaments = [
     organizationLogo: "https://ui-avatars.com/api/?name=RO&background=2563EB&color=fff",
     status: "live",
     format: "Squad",
+    formatType: "roadmap",
     tournamentType: "Invitational",
     tournamentTier: "Pro",
     region: "India",
@@ -629,10 +630,10 @@ export const exploreTournamentTeams = {
 
 export const exploreTournamentSchedule = {
   "bgmi-pro-championship": [
-    { id: "m1", matchNumber: 1, stage: "Group Stage", round: "Round 1", scheduledTime: "2026-09-20T14:00:00Z", status: "COMPLETED", map: "Erangel", format: "BO1" },
-    { id: "m2", matchNumber: 2, stage: "Group Stage", round: "Round 1", scheduledTime: "2026-09-20T15:00:00Z", status: "COMPLETED", map: "Miramar", format: "BO1" },
-    { id: "m3", matchNumber: 3, stage: "Group Stage", round: "Round 2", scheduledTime: "2026-09-20T16:00:00Z", status: "COMPLETED", map: "Sanhok", format: "BO1" },
-    { id: "m4", matchNumber: 4, stage: "Group Stage", round: "Round 2", scheduledTime: "2026-09-20T17:00:00Z", status: "COMPLETED", map: "Erangel", format: "BO1" },
+    { id: "m1", matchNumber: 1, stage: "Qualifiers", round: "Round 1", scheduledTime: "2026-09-20T14:00:00Z", status: "COMPLETED", map: "Erangel", format: "BO1" },
+    { id: "m2", matchNumber: 2, stage: "Qualifiers", round: "Round 1", scheduledTime: "2026-09-20T15:00:00Z", status: "COMPLETED", map: "Miramar", format: "BO1" },
+    { id: "m3", matchNumber: 3, stage: "Quarter Finals", round: "Round 1", scheduledTime: "2026-09-20T16:00:00Z", status: "COMPLETED", map: "Sanhok", format: "BO1" },
+    { id: "m4", matchNumber: 4, stage: "Quarter Finals", round: "Round 1", scheduledTime: "2026-09-20T17:00:00Z", status: "COMPLETED", map: "Erangel", format: "BO1" },
     { id: "m5", matchNumber: 5, stage: "Semi Finals", round: "Match 1", scheduledTime: "2026-09-21T14:00:00Z", status: "COMPLETED", map: "Erangel", format: "BO1" },
     { id: "m6", matchNumber: 6, stage: "Semi Finals", round: "Match 2", scheduledTime: "2026-09-21T15:00:00Z", status: "COMPLETED", map: "Miramar", format: "BO1" },
     { id: "m7", matchNumber: 7, stage: "Semi Finals", round: "Match 3", scheduledTime: "2026-09-21T16:00:00Z", status: "IN_PROGRESS", map: "Sanhok", format: "BO1", teamScores: [{ name: "Storm Squad", score: 14 }, { name: "Rift Legends", score: 12 }] },

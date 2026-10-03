@@ -1,2 +1,0 @@
-ALTER TABLE chat_messages
-ADD COLUMN is_system BOOLEAN DEFAULT FALSE;

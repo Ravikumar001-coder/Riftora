@@ -25,7 +25,7 @@ const LiveScheduleBoard = ({ tournamentId, matches }) => {
     
     subscribe(topic, (updatedMatch) => {
       // Update match in the react-query cache
-      queryClient.setQueryData(['tournamentMatches', tournamentId], (oldData) => {
+      queryClient.setQueryData(['admin-matches', tournamentId], (oldData) => {
         if (!oldData) return oldData;
         return oldData.map(match => 
           match.matchId === updatedMatch.matchId ? updatedMatch : match

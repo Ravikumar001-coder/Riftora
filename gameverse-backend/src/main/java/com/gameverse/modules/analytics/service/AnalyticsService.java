@@ -6,6 +6,7 @@ import com.gameverse.modules.analytics.dto.TimeSeriesDataDto;
 import com.gameverse.modules.analytics.dto.TournamentPerformanceDto;
 import com.gameverse.modules.analytics.entity.TournamentAnalytics;
 import com.gameverse.modules.analytics.repository.TournamentAnalyticsRepository;
+import com.gameverse.modules.registration.repository.RegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +18,14 @@ import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 public class AnalyticsService {
 
     private final TournamentAnalyticsRepository analyticsRepository;
+    private final RegistrationRepository registrationRepository;
 
     @Transactional(readOnly = true)
     public OrgAnalyticsDashboardDto getOrgDashboardMetrics(String orgId) {
@@ -31,7 +34,7 @@ public class AnalyticsService {
         OrgAnalyticsDashboardDto dto = new OrgAnalyticsDashboardDto();
         dto.setTotalTournamentsRun(analyticsList.size());
         
-        LocalDate oneMonthAgo = LocalDate.now().minusMonths(1);
+        LocalDateTime oneMonthAgo = LocalDateTime.now().minusMonths(1);
         long thisMonth = analyticsList.stream()
                 .filter(a -> a.getTournament().getStartDate() != null && !a.getTournament().getStartDate().isBefore(oneMonthAgo))
                 .count();
@@ -67,7 +70,7 @@ public class AnalyticsService {
         
         Map<LocalDate, List<TournamentAnalytics>> byDate = analyticsList.stream()
                 .filter(a -> a.getTournament().getStartDate() != null)
-                .collect(Collectors.groupingBy(a -> a.getTournament().getStartDate()));
+                .collect(Collectors.groupingBy(a -> a.getTournament().getStartDate().toLocalDate()));
                 
         byDate.forEach((date, list) -> {
             tournamentCount.add(new TimeSeriesDataDto(date, list.size(), null));
@@ -103,7 +106,7 @@ public class AnalyticsService {
             TournamentPerformanceDto dto = new TournamentPerformanceDto();
             dto.setTournamentId(a.getTournament().getTournamentId());
             dto.setTournamentName(a.getTournament().getName());
-            dto.setDate(a.getTournament().getStartDate());
+            dto.setDate(a.getTournament().getStartDate() != null ? a.getTournament().getStartDate().toLocalDate() : null);
             dto.setGameName(a.getTournament().getGame() != null ? a.getTournament().getGame().getGameName() : "Unknown");
             dto.setParticipants(a.getTotalParticipants());
             dto.setPrizePool(a.getPrizePoolDistributed());
@@ -143,16 +146,21 @@ public class AnalyticsService {
 
     @Transactional(readOnly = true)
     public com.gameverse.modules.analytics.dto.PlayerRetentionDto getPlayerRetentionAnalysis(String orgId) {
-        // Mocking Player Retention Analysis since deep Registration overlap checks are expensive.
+        List<Object[]> teamTourneyCounts = registrationRepository.countTournamentsPerTeamByOrg(orgId);
+        
+        long totalTeams = teamTourneyCounts.size();
+        long returningTeams = teamTourneyCounts.stream()
+                .mapToLong(row -> ((Number) row[1]).longValue())
+                .filter(count -> count > 1)
+                .count();
+                
+        double retentionRate = totalTeams == 0 ? 0.0 : ((double) returningTeams / totalTeams) * 100.0;
+
         com.gameverse.modules.analytics.dto.PlayerRetentionDto dto = new com.gameverse.modules.analytics.dto.PlayerRetentionDto();
-        dto.setOverallRetentionRate(65.4); // 65.4%
+        dto.setOverallRetentionRate(retentionRate);
         
         List<com.gameverse.modules.analytics.dto.RetentionTrendDto> trends = new ArrayList<>();
-        trends.add(new com.gameverse.modules.analytics.dto.RetentionTrendDto("T1 -> T2", 70.5));
-        trends.add(new com.gameverse.modules.analytics.dto.RetentionTrendDto("T2 -> T3", 68.2));
-        trends.add(new com.gameverse.modules.analytics.dto.RetentionTrendDto("T3 -> T4", 62.1));
-        trends.add(new com.gameverse.modules.analytics.dto.RetentionTrendDto("T4 -> T5", 65.4));
-        
+        trends.add(new com.gameverse.modules.analytics.dto.RetentionTrendDto("Current", retentionRate));
         dto.setRetentionTrend(trends);
         
         return dto;
@@ -184,8 +192,8 @@ public class AnalyticsService {
         dto.setOrgName(analytics.getOrganization().getOrgName());
         dto.setOrgLogo(analytics.getOrganization().getLogoUrl());
         
-        dto.setStartDate(analytics.getTournament().getStartDate());
-        dto.setEndDate(analytics.getTournament().getEndDate());
+        dto.setStartDate(analytics.getTournament().getStartDate() != null ? analytics.getTournament().getStartDate().toLocalDate() : null);
+        dto.setEndDate(analytics.getTournament().getEndDate() != null ? analytics.getTournament().getEndDate().toLocalDate() : null);
         dto.setGameName(analytics.getTournament().getGame() != null ? analytics.getTournament().getGame().getGameName() : "Unknown");
         
         dto.setTotalParticipants(analytics.getTotalParticipants());

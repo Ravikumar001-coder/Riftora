@@ -1,9 +1,10 @@
 import React, { useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { usePublicProfileQuery, useIsFollowingQuery, useToggleFollowMutation } from '../../../features/organizations/api/usePublicOrganizationQueries';
+import { usePublicProfileQuery, useIsFollowingQuery, useToggleFollowMutation, usePublicOrganizationTournamentsQuery } from '../../../features/organizations/api/usePublicOrganizationQueries';
 import { useAuthStore } from '../../../store/authStore';
-import { MapPin, Users, CheckCircle2, ChevronLeft, ShieldCheck, LogIn } from 'lucide-react';
+import { MapPin, Users, CheckCircle2, ChevronLeft, ShieldCheck, LogIn, Calendar, Globe, Camera, Video, Mail, MessageSquare } from 'lucide-react';
 import { OrgSubdomainContext } from '../../../app/SubdomainApp';
+import { TournamentCard } from '../../../portals/public/components/explore/TournamentCard';
 
 export default function OrganizationProfilePage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function OrganizationProfilePage() {
   const { data: org, isLoading, error } = usePublicProfileQuery(slug);
   const { data: isFollowing } = useIsFollowingQuery(org?.orgId);
   const toggleFollow = useToggleFollowMutation();
+  const { data: tournamentsData, isLoading: isTournamentsLoading } = usePublicOrganizationTournamentsQuery(slug);
 
   if (isLoading) {
     return (
@@ -36,7 +38,7 @@ export default function OrganizationProfilePage() {
 
   const handleFollowClick = () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { returnTo: `/orgs/${slug}` } });
+      navigate('/auth/login', { state: { returnTo: `/orgs/${slug}` } });
       return;
     }
     toggleFollow.mutate(org.orgId);
@@ -125,9 +127,21 @@ export default function OrganizationProfilePage() {
             
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 md:p-8">
               <h3 className="text-lg font-bold text-white mb-4">Recent Tournaments</h3>
-              <div className="text-center py-10 border border-dashed border-slate-700 rounded-xl">
-                <p className="text-slate-400">No public tournaments available yet.</p>
-              </div>
+              {isTournamentsLoading ? (
+                <div className="flex justify-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+                </div>
+              ) : tournamentsData?.content?.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {tournamentsData.content.map(tournament => (
+                    <TournamentCard key={tournament.tournament_id || tournament.tournamentId} tournament={tournament} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 border border-dashed border-slate-700 rounded-xl">
+                  <p className="text-slate-400">No public tournaments available yet.</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -151,6 +165,54 @@ export default function OrganizationProfilePage() {
                 </li>
               </ul>
             </div>
+
+            {(org.websiteUrl || org.discordLink || org.instagramHandle || org.youtubeUrl || org.contactEmail) && (
+              <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Connect</h3>
+                <div className="space-y-3">
+                  {org.websiteUrl && (
+                    <a href={org.websiteUrl.startsWith('http') ? org.websiteUrl : `https://${org.websiteUrl}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors group">
+                      <div className="p-2 bg-slate-900 rounded-lg group-hover:bg-blue-600/20 group-hover:text-blue-400 transition-colors">
+                        <Globe className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-sm">Website</span>
+                    </a>
+                  )}
+                  {org.discordLink && (
+                    <a href={org.discordLink.startsWith('http') ? org.discordLink : `https://${org.discordLink}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors group">
+                      <div className="p-2 bg-slate-900 rounded-lg group-hover:bg-[#5865F2]/20 group-hover:text-[#5865F2] transition-colors">
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-sm">Discord Server</span>
+                    </a>
+                  )}
+                  {org.instagramHandle && (
+                    <a href={org.instagramHandle.startsWith('http') ? org.instagramHandle : `https://instagram.com/${org.instagramHandle.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors group">
+                      <div className="p-2 bg-slate-900 rounded-lg group-hover:bg-pink-600/20 group-hover:text-pink-400 transition-colors">
+                        <Camera className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-sm">{org.instagramHandle}</span>
+                    </a>
+                  )}
+                  {org.youtubeUrl && (
+                    <a href={org.youtubeUrl.startsWith('http') ? org.youtubeUrl : `https://${org.youtubeUrl}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors group">
+                      <div className="p-2 bg-slate-900 rounded-lg group-hover:bg-red-600/20 group-hover:text-red-500 transition-colors">
+                        <Video className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-sm">YouTube Channel</span>
+                    </a>
+                  )}
+                  {org.contactEmail && (
+                    <a href={`mailto:${org.contactEmail}`} className="flex items-center gap-3 text-slate-300 hover:text-white transition-colors group">
+                      <div className="p-2 bg-slate-900 rounded-lg group-hover:bg-emerald-600/20 group-hover:text-emerald-400 transition-colors">
+                        <Mail className="w-4 h-4" />
+                      </div>
+                      <span className="font-medium text-sm">{org.contactEmail}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

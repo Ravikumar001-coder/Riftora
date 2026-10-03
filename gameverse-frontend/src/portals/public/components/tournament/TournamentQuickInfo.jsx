@@ -4,54 +4,65 @@ import { useStompStore } from '../../../../store/stompStore';
 
 export function TournamentQuickInfo({ tournament }) {
   const { subscribe, unsubscribe } = useStompStore();
-  const [teamsRegistered, setTeamsRegistered] = useState(tournament?.teamsRegistered || 0);
+  const [teamsRegistered, setTeamsRegistered] = useState((tournament?.slots_taken !== undefined ? tournament.slots_taken : tournament?.slotsTaken) || 0);
 
   useEffect(() => {
     if (tournament) {
-      setTeamsRegistered(tournament.teamsRegistered || 0);
-      const topic = `/topic/tournament.${tournament.tournamentId}.registrations`;
-      subscribe(topic, (data) => {
-        if (data && typeof data.teamsRegistered === 'number') {
-          setTeamsRegistered(data.teamsRegistered);
-        }
-      });
-      return () => unsubscribe(topic);
+      setTeamsRegistered((tournament.slots_taken !== undefined ? tournament.slots_taken : tournament.slotsTaken) || 0);
+      const tid = tournament.tournament_id || tournament.tournamentId;
+      if (tid) {
+        const topic = `/topic/tournament.${tid}.registrations`;
+        subscribe(topic, (data) => {
+          if (data && (typeof data.slotsTaken === 'number' || typeof data.slots_taken === 'number')) {
+            setTeamsRegistered(data.slots_taken !== undefined ? data.slots_taken : data.slotsTaken);
+          }
+        });
+        return () => unsubscribe(topic);
+      }
     }
   }, [tournament, subscribe, unsubscribe]);
 
   if (!tournament) return null;
 
+  const startDate = tournament.start_date || tournament.startDate;
+  const gameName = tournament.game_name || tournament.gameName || 'TBA';
+  const totalSlots = tournament.total_team_slots || tournament.totalTeamSlots || 0;
+  const prizeTotal = tournament.prize_pool_total || tournament.prizePoolTotal || 0;
+  const currency = tournament.prize_currency || tournament.prizeCurrency || '₹';
+  const entryFee = tournament.entry_fee !== undefined ? tournament.entry_fee : tournament.entryFee;
+  const formatType = tournament.format_type || tournament.formatType || 'TBD';
+
   const quickStats = [
     {
       icon: <Calendar className="w-5 h-5 text-blue-400" />,
       label: "Start Date",
-      value: new Date(tournament.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      value: startDate ? new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'
     },
     {
       icon: <Gamepad2 className="w-5 h-5 text-purple-400" />,
       label: "Game",
-      value: tournament.game
+      value: gameName
     },
     {
       icon: <Users className="w-5 h-5 text-green-400" />,
       label: "Teams",
-      value: `${teamsRegistered} / ${tournament.totalTeamSlots || tournament.maxTeams || 0}`,
-      subValue: tournament.status === 'registration_open' ? 'Registration Open' : 'Registration Closed'
+      value: `${teamsRegistered} / ${totalSlots}`,
+      subValue: tournament.status === 'PUBLISHED' ? 'Registration Open' : 'Registration Closed'
     },
     {
       icon: <Trophy className="w-5 h-5 text-yellow-400" />,
       label: "Prize Pool",
-      value: tournament.prizePoolString
+      value: prizeTotal > 0 ? `${currency}${prizeTotal.toLocaleString()}` : 'TBA'
     },
     {
       icon: <Ticket className="w-5 h-5 text-pink-400" />,
       label: "Entry Fee",
-      value: tournament.entryFee === 0 ? "Free" : `₹${tournament.entryFee}`
+      value: (!entryFee || entryFee === 0) ? "Free" : `${currency}${entryFee}`
     },
     {
       icon: <Target className="w-5 h-5 text-orange-400" />,
       label: "Format",
-      value: tournament.format
+      value: formatType.replace(/_/g, ' ').toUpperCase()
     }
   ];
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Radio, ClipboardList, CalendarDays, Settings } from 'lucide-react';
 
-export function ActiveTournaments({ tournaments }) {
+export function ActiveTournaments({ tournaments, orgSlug }) {
   if (!tournaments || tournaments.length === 0) {
     return (
       <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 mb-8 text-center">
@@ -39,7 +39,7 @@ export function ActiveTournaments({ tournaments }) {
     <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden mb-8">
       <div className="p-5 sm:p-6 border-b border-slate-800/60 flex items-center justify-between">
         <span className="text-sm font-bold text-slate-300 tracking-wider">ACTIVE TOURNAMENTS</span>
-        <Link to="/organizations/hydra-esports/manage/tournaments" className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+        <Link to={`/organizations/${orgSlug}/manage/tournaments`} className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
           View All <ChevronRight className="w-3 h-3" />
         </Link>
       </div>

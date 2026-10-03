@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Navigate } from 'react-router-dom';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
 import { Button } from '../../../components/ui/button';
 import { Check, X, AlertTriangle } from 'lucide-react';
 
@@ -43,24 +42,24 @@ export function TournamentRegistrationPage() {
 
   if (isTourneyLoading) {
     return (
-      <AuroraBackground>
+      <>
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (tourneyError || !tournament) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <AlertTriangle className="w-16 h-16 text-slate-500 mb-6" />
           <h1 className="text-2xl font-bold text-white mb-2">Tournament not found</h1>
           <p className="text-slate-400 mb-8">The tournament you're looking for doesn't exist or is no longer available.</p>
           <Button onClick={() => navigate('/explore')}>Back to Explore</Button>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
@@ -77,42 +76,42 @@ export function TournamentRegistrationPage() {
   
   if (!isRegistrationOpen) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <AlertTriangle className="w-16 h-16 text-yellow-500 mb-6" />
           <h1 className="text-2xl font-bold text-white mb-2">Registration is closed</h1>
           <p className="text-slate-400 mb-8">This tournament is not currently accepting team registrations.</p>
           <Button onClick={() => navigate(`/t/${tournament.slug || tournament.tournamentId || tournament.id}`)}>View Tournament</Button>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
   
   // Registration Deadline Check
   if (tournament.registrationClosesAt && new Date(tournament.registrationClosesAt) < new Date()) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <AlertTriangle className="w-16 h-16 text-yellow-500 mb-6" />
           <h1 className="text-2xl font-bold text-white mb-2">Registration closed</h1>
           <p className="text-slate-400 mb-8">This tournament is no longer accepting registrations.</p>
           <Button onClick={() => navigate(`/t/${tournament.slug || tournament.tournamentId || tournament.id}`)}>View Tournament</Button>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
   
   // Capacity Check
   if (tournament.isFull && !tournament.waitlistEnabled) {
     return (
-      <AuroraBackground>
+      <>
         <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
           <AlertTriangle className="w-16 h-16 text-yellow-500 mb-6" />
           <h1 className="text-2xl font-bold text-white mb-2">Registration full</h1>
           <p className="text-slate-400 mb-8">This tournament has reached its team capacity.</p>
           <Button onClick={() => navigate(`/t/${tournament.slug || tournament.tournamentId || tournament.id}`)}>View Tournament</Button>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
@@ -121,14 +120,14 @@ export function TournamentRegistrationPage() {
     const existingRegistration = getRegistration(tournament.id, selectedTeamId);
     if (existingRegistration) {
       return (
-        <AuroraBackground>
+        <>
           <div className="min-h-screen pt-32 px-6 flex flex-col items-center">
             <Check className="w-16 h-16 text-blue-500 mb-6" />
             <h1 className="text-2xl font-bold text-white mb-2">Already registered</h1>
             <p className="text-slate-400 mb-8">This team is already registered for this tournament.</p>
             <Button onClick={() => navigate(`/tournaments/${tournament.tournamentId || tournament.id}/my-registration`)}>View Registration</Button>
           </div>
-        </AuroraBackground>
+        </>
       );
     }
   }
@@ -147,7 +146,7 @@ export function TournamentRegistrationPage() {
   };
 
   return (
-    <AuroraBackground className="min-h-screen bg-slate-950 pb-20">
+    <>
       {/* Header */}
       <div className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 border-b border-slate-800 bg-slate-900/50">
         <div className="max-w-6xl mx-auto">
@@ -296,6 +295,6 @@ export function TournamentRegistrationPage() {
           </div>
         </div>
       </div>
-    </AuroraBackground>
+    </>
   );
 }

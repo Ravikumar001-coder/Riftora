@@ -117,5 +117,10 @@ export const organizationService = {
       }
     });
     return response.data.data;
+  },
+
+  async getDashboardStats(orgId) {
+    const { data } = await api.get(`/organizations/${orgId}/dashboard-stats`);
+    return data.data;
   }
 };

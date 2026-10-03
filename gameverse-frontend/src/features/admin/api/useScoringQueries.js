@@ -19,7 +19,14 @@ export const useScoringMutations = (orgId) => {
 
   const createTemplate = useMutation({
     mutationFn: async (data) => {
-      const response = await api.post(`/organizations/${orgId}/scoring-templates`, data);
+      const snakeCaseData = {
+        template_name: data.templateName,
+        game_id: data.gameId,
+        kill_cap: data.killCap,
+        kill_pts_each: data.killPtsEach,
+        placement_points: data.placementPoints
+      };
+      const response = await api.post(`/organizations/${orgId}/scoring-templates`, snakeCaseData);
       return response.data;
     },
     onSuccess: () => {
@@ -29,7 +36,14 @@ export const useScoringMutations = (orgId) => {
 
   const updateTemplate = useMutation({
     mutationFn: async ({ templateId, data }) => {
-      const response = await api.put(`/organizations/${orgId}/scoring-templates/${templateId}`, data);
+      const snakeCaseData = {
+        template_name: data.templateName,
+        game_id: data.gameId,
+        kill_cap: data.killCap,
+        kill_pts_each: data.killPtsEach,
+        placement_points: data.placementPoints
+      };
+      const response = await api.put(`/organizations/${orgId}/scoring-templates/${templateId}`, snakeCaseData);
       return response.data;
     },
     onSuccess: () => {

@@ -95,8 +95,8 @@ public class OverlayConfigService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid overlay or token"));
 
         if (overlay.getTournament().getEndDate() != null) {
-            java.time.LocalDate expiryDate = overlay.getTournament().getEndDate().plusDays(30);
-            if (java.time.LocalDate.now().isAfter(expiryDate)) {
+            java.time.LocalDateTime expiryDate = overlay.getTournament().getEndDate().plusDays(30);
+            if (java.time.LocalDateTime.now().isAfter(expiryDate)) {
                 throw new IllegalArgumentException("OVERLAY_EXPIRED");
             }
         }

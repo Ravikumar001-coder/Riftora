@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
+import { api } from '../../../services/api';
 
 const TEMPLATES_KEYS = {
     all: (orgId) => ['scoring-templates', orgId],
@@ -10,7 +10,7 @@ export function useScoringTemplates(orgId) {
     return useQuery({
         queryKey: TEMPLATES_KEYS.all(orgId),
         queryFn: async () => {
-            const { data } = await axios.get(`http://localhost:8080/api/v1/organizations/${orgId}/scoring-templates`);
+            const { data } = await api.get(`/organizations/${orgId}/scoring-templates`);
             return data;
         },
         enabled: !!orgId
@@ -20,7 +20,7 @@ export function useScoringTemplates(orgId) {
 export function useSimulateScoring(orgId, templateId) {
     return useMutation({
         mutationFn: async (simulationData) => {
-            const { data } = await axios.post(`http://localhost:8080/api/v1/organizations/${orgId}/scoring-templates/${templateId}/simulate`, simulationData);
+            const { data } = await api.post(`/organizations/${orgId}/scoring-templates/${templateId}/simulate`, simulationData);
             return data;
         }
     });

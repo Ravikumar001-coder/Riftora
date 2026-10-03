@@ -29,6 +29,7 @@ import JoinOrganizationPage from '../portals/public/pages/JoinOrganizationPage';
 import { PlayerLayout } from '../portals/player/layout/PlayerLayout';
 import { DashboardPage as PlayerDashboardPage } from '../portals/player/pages/DashboardPage';
 import { OrganizerLayout } from '../portals/organizer/layout/OrganizerLayout';
+import { OrganizationSelectionPage } from '../portals/organizer/pages/OrganizationSelectionPage';
 import { OrganizerDashboardPage } from '../portals/organizer/pages/OrganizerDashboardPage';
 import { CreateOrganizationPage } from '../features/organizations/pages/CreateOrganizationPage';
 import { OrganizationOverviewPage } from '../features/organizations/pages/OrganizationOverviewPage';
@@ -37,6 +38,8 @@ import { OrganizationMembersPage } from '../features/organizations/pages/Organiz
 import { OrganizationBillingPage } from '../features/organizations/pages/OrganizationBillingPage';
 import { OrganizationAnalyticsPage } from '../features/organizations/pages/OrganizationAnalyticsPage';
 import { OrganizationSettingsPage } from '../features/organizations/pages/OrganizationSettingsPage';
+import { GameConfigurationsPage } from '../features/organizations/pages/GameConfigurationsPage';
+import { CreateGameConfigurationPage } from '../features/organizations/pages/CreateGameConfigurationPage';
 import { OrganizationScoringPage } from '../features/organizations/pages/OrganizationScoringPage';
 import { TournamentManagementLayout } from '../features/tournaments/layout/TournamentManagementLayout';
 import { TournamentOverviewPage as OrganizerTournamentOverviewPage } from '../features/tournaments/pages/TournamentOverviewPage';
@@ -45,6 +48,8 @@ import { TournamentSchedulePage } from '../features/tournaments/pages/Tournament
 import { TournamentPrizeSetupPage } from '../features/tournaments/pages/TournamentPrizeSetupPage';
 import { TournamentStaffPage } from '../features/tournaments/pages/TournamentStaffPage';
 import { TournamentSettingsPage } from '../features/tournaments/pages/TournamentSettingsPage';
+import { EditTournamentPage } from '../features/tournaments/pages/EditTournamentPage';
+import { TournamentRulesPage } from '../features/tournaments/pages/TournamentRulesPage';
 import { CommandCenterLayout } from '../features/command-center/layout/CommandCenterLayout';
 import { TournamentCommandCenterPage } from '../features/command-center/pages/TournamentCommandCenterPage';
 import { TournamentCheckInPage } from '../features/command-center/pages/TournamentCheckInPage';
@@ -211,7 +216,7 @@ const routes = [
       },
       {
         path: "aurora",
-        element: <AuroraBackgroundDemo />,
+        element: <></>,
       },
       {
         path: "docs",
@@ -244,8 +249,16 @@ const routes = [
     element: <RegisterPage />,
   },
   {
+    path: "/register",
+    element: <Navigate to="/auth/register" replace />,
+  },
+  {
     path: "/auth/login",
     element: <LoginPage />,
+  },
+  {
+    path: "/login",
+    element: <Navigate to="/auth/login" replace />,
   },
   {
     path: "/render/graphic/:type/:tournamentId/:targetId",
@@ -284,12 +297,34 @@ const routes = [
     element: <DashboardRouter />,
   },
   {
+    path: "/dashboard/select-org",
+    element: <AuthGuard requireAuth={true}><OrganizationSelectionPage /></AuthGuard>,
+  },
+  {
     path: "/dashboard/organizer",
     element: <OrganizerLayout />,
     children: [
       {
         index: true,
         element: <OrganizerDashboardPage />
+      },
+      {
+        path: "notifications",
+        element: <NotificationsPage />
+      }
+    ]
+  },
+  {
+    path: "/dashboard/organizer/:orgSlug",
+    element: <OrganizerLayout />,
+    children: [
+      {
+        index: true,
+        element: <OrganizerDashboardPage />
+      },
+      {
+        path: "notifications",
+        element: <NotificationsPage />
       }
     ]
   },
@@ -374,6 +409,10 @@ const routes = [
         element: <OrganizationTournamentsPage />
       },
       {
+        path: "tournaments/new",
+        element: <CreateTournamentPage />
+      },
+      {
         path: "members",
         element: <OrganizationMembersPage />
       },
@@ -392,6 +431,14 @@ const routes = [
       {
         path: "settings",
         element: <OrganizationSettingsPage />
+      },
+      {
+        path: "game-configurations",
+        element: <GameConfigurationsPage />
+      },
+      {
+        path: "game-configurations/new",
+        element: <CreateGameConfigurationPage />
       }
     ]
   },
@@ -406,6 +453,14 @@ const routes = [
       {
         path: "settings",
         element: <TournamentSettingsPage />
+      },
+      {
+        path: "edit",
+        element: <EditTournamentPage />
+      },
+      {
+        path: "rules",
+        element: <TournamentRulesPage />
       },
       // Placeholders for future implementations mapped in UI
       {

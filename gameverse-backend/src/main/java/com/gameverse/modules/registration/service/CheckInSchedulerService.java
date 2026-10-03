@@ -37,7 +37,7 @@ public class CheckInSchedulerService {
                 .toList();
 
         for (Tournament t : upcomingTournaments) {
-            LocalDateTime openTime = t.getStartDate().atStartOfDay().minusMinutes(t.getCheckinOpenMins());
+            LocalDateTime openTime = t.getStartDate().minusMinutes(t.getCheckinOpenMins());
             if (!now.isBefore(openTime)) {
                 t.setStatus(Tournament.TournamentStatus.check_in);
                 tournamentRepository.save(t);
@@ -54,7 +54,7 @@ public class CheckInSchedulerService {
                 .toList();
 
         for (Tournament t : activeCheckInTournaments) {
-            LocalDateTime closeTime = t.getStartDate().atStartOfDay().minusMinutes(t.getCheckinCloseMins());
+            LocalDateTime closeTime = t.getStartDate().minusMinutes(t.getCheckinCloseMins());
             
             if (!now.isBefore(closeTime)) {
                 t.setStatus(Tournament.TournamentStatus.live); // Move to live (or a pre-live state)

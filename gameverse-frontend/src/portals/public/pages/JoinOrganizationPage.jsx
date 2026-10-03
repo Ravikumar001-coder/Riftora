@@ -24,7 +24,7 @@ export default function JoinOrganizationPage() {
     if (!isAuthenticated) {
       // Save intent and redirect to login
       sessionStorage.setItem('postLoginRedirect', location.pathname + location.search);
-      navigate('/login');
+      navigate('/auth/login');
       return;
     }
 

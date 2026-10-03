@@ -12,13 +12,22 @@ import com.gameverse.modules.notification.repository.NotificationTemplateReposit
 import com.gameverse.modules.organization.dto.CreateOrgRequest;
 import com.gameverse.modules.organization.dto.UpdateOrgSettingsRequest;
 import com.gameverse.modules.organization.dto.OrgResponse;
+import com.gameverse.modules.organization.dto.dashboard.*;
 import com.gameverse.modules.organization.entity.OrgMember;
+import com.gameverse.modules.organization.entity.OrgPlan;
 import com.gameverse.modules.organization.entity.Organization;
 import com.gameverse.modules.organization.repository.OrgMemberRepository;
+import com.gameverse.modules.organization.repository.OrgPlanRepository;
 import com.gameverse.modules.organization.repository.OrganizationRepository;
+import com.gameverse.modules.tournament.repository.TournamentRepository;
+import com.gameverse.modules.tournament.entity.Tournament;
+import com.gameverse.modules.tournament.entity.Tournament.TournamentStatus;
+import com.gameverse.modules.registration.repository.RegistrationRepository;
+import com.gameverse.modules.registration.entity.Registration;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +43,9 @@ public class OrgService {
     private final GameRepository gameRepository;
     private final ScoringTemplateRepository scoringTemplateRepository;
     private final NotificationTemplateRepository notificationTemplateRepository;
+    private final OrgPlanRepository orgPlanRepository;
+    private final TournamentRepository tournamentRepository;
+    private final RegistrationRepository registrationRepository;
 
     @Transactional
     public OrgResponse createOrganization(String ownerUserId, CreateOrgRequest request) {
@@ -51,6 +63,9 @@ public class OrgService {
             throw new RuntimeException("Organization slug already exists");
         }
 
+        OrgPlan defaultPlan = orgPlanRepository.findByPlanCode(OrgPlan.PlanCode.free)
+                .orElseThrow(() -> new RuntimeException("Default Free plan not found in database"));
+
         Organization org = new Organization();
         org.setOrgName(request.getOrgName());
         org.setOrgSlug(request.getOrgSlug());
@@ -65,6 +80,7 @@ public class OrgService {
         org.setYoutubeUrl(request.getYoutubeUrl());
         org.setDiscordLink(request.getDiscordLink());
         org.setOwner(owner);
+        org.setPlan(defaultPlan);
 
         org = orgRepository.save(org);
 
@@ -73,6 +89,12 @@ public class OrgService {
         ownerMember.setUser(owner);
         ownerMember.setRole(OrgMember.OrgRole.org_owner);
         orgMemberRepository.save(ownerMember);
+
+        if (!Boolean.TRUE.equals(owner.getOnboardingCompleted())) {
+            owner.setOnboardingCompleted(true);
+            owner.setOnboardingPath(User.OnboardingPath.organizer);
+            userRepository.save(owner);
+        }
 
         // Copy default system templates to this org
         copySystemTemplatesToOrg(primaryGame.getGameId(), org);
@@ -142,6 +164,11 @@ public class OrgService {
     }
 
     @Transactional(readOnly = true)
+    public boolean checkSlugExists(String orgSlug) {
+        return orgRepository.existsByOrgSlug(orgSlug);
+    }
+
+    @Transactional(readOnly = true)
     public OrgResponse getOrganizationByCustomSubdomain(String customSubdomain) {
         Organization org = orgRepository.findByCustomSubdomain(customSubdomain)
                 .orElseThrow(() -> new RuntimeException("Organization not found"));
@@ -199,6 +226,113 @@ public class OrgService {
 
         Organization saved = orgRepository.save(org);
         return mapToResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public DashboardDataDto getDashboardStats(String orgId) {
+        long activeTournamentsCount = tournamentRepository.countByOrganization_OrgIdAndStatusIn(orgId, List.of(
+                TournamentStatus.published, TournamentStatus.registration_open, TournamentStatus.registration_closed,
+                TournamentStatus.check_in, TournamentStatus.live));
+        long upcomingTournamentsCount = tournamentRepository.countByOrganization_OrgIdAndStatusIn(orgId, List.of(
+                TournamentStatus.published, TournamentStatus.registration_open));
+        long liveEventsCount = tournamentRepository.countByOrganization_OrgIdAndStatusIn(orgId, List.of(
+                TournamentStatus.live));
+        long draftTournamentsCount = tournamentRepository.countByOrganization_OrgIdAndStatusIn(orgId, List.of(
+                TournamentStatus.draft));
+        long pendingRegistrationsCount = registrationRepository.countByTournament_Organization_OrgIdAndStatus(orgId, Registration.RegistrationStatus.under_review);
+
+        DashboardStatsDto stats = DashboardStatsDto.builder()
+                .activeTournaments(activeTournamentsCount)
+                .upcomingTournaments(upcomingTournamentsCount)
+                .draftTournaments(draftTournamentsCount)
+                .liveEvents(liveEventsCount)
+                .pendingRegistrations(pendingRegistrationsCount)
+                .build();
+                
+        // Fetch top 4 active tournaments
+        Page<Tournament> activeTournamentsPage = tournamentRepository.findAllByOrganization_OrgIdAndStatusIn(
+                orgId, 
+                List.of(TournamentStatus.published, TournamentStatus.registration_open, TournamentStatus.registration_closed, TournamentStatus.check_in, TournamentStatus.live),
+                PageRequest.of(0, 4)
+        );
+        
+        List<DashboardActiveTournamentDto> activeTournaments = activeTournamentsPage.getContent().stream().map(t -> {
+            long currentTeams = registrationRepository.countByTournament_TournamentIdAndStatusIn(t.getTournamentId(), List.of(Registration.RegistrationStatus.approved, Registration.RegistrationStatus.submitted));
+            return DashboardActiveTournamentDto.builder()
+                    .id(t.getTournamentId())
+                    .name(t.getName())
+                    .status(t.getStatus().name().toUpperCase())
+                    .currentTeams((int) currentTeams)
+                    .maxTeams(t.getTotalTeamSlots() != null ? t.getTotalTeamSlots() : 0)
+                    .nextAction(t.getStatus() == TournamentStatus.live ? "Command Center" : "Manage")
+                    .link("/manage/" + t.getTournamentId() + "/overview")
+                    .build();
+        }).toList();
+
+        // Next tournament
+        Page<Tournament> nextTournamentsPage = tournamentRepository.findAllByOrganization_OrgIdAndStatusIn(
+                orgId, 
+                List.of(TournamentStatus.published, TournamentStatus.registration_open),
+                PageRequest.of(0, 1)
+        );
+        
+        DashboardNextTournamentDto nextTournament = null;
+        if (!nextTournamentsPage.isEmpty()) {
+            Tournament t = nextTournamentsPage.getContent().get(0);
+            long registeredTeams = registrationRepository.countByTournament_TournamentIdAndStatusIn(t.getTournamentId(), List.of(Registration.RegistrationStatus.approved, Registration.RegistrationStatus.submitted));
+            String formatTypeStr = t.getFormatType() != null ? t.getFormatType().name().replace("_", " ") : "N/A";
+            
+            // Format string appropriately
+            if (formatTypeStr.contains(" ")) {
+                String[] words = formatTypeStr.split(" ");
+                StringBuilder formatted = new StringBuilder();
+                for (String word : words) {
+                    if (word.length() > 0) {
+                        formatted.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1).toLowerCase()).append(" ");
+                    }
+                }
+                formatTypeStr = formatted.toString().trim();
+            } else {
+                formatTypeStr = formatTypeStr.substring(0, 1).toUpperCase() + formatTypeStr.substring(1).toLowerCase();
+            }
+            
+            nextTournament = DashboardNextTournamentDto.builder()
+                    .id(t.getTournamentId())
+                    .title(t.getName())
+                    .game(t.getGame() != null ? t.getGame().getGameName() : "Unknown")
+                    .format(formatTypeStr)
+                    .maxTeams(t.getTotalTeamSlots() != null ? t.getTotalTeamSlots() : 0)
+                    .registeredTeams((int) registeredTeams)
+                    .status(t.getStatus().name().toUpperCase())
+                    .startAt(t.getStartDate())
+                    .isLive(false)
+                    .build();
+        }
+        
+        long approved = registrationRepository.countByTournament_Organization_OrgIdAndStatus(orgId, Registration.RegistrationStatus.approved);
+        long rejected = registrationRepository.countByTournament_Organization_OrgIdAndStatus(orgId, Registration.RegistrationStatus.rejected);
+        long waitlisted = registrationRepository.countByTournament_Organization_OrgIdAndStatus(orgId, Registration.RegistrationStatus.waitlisted);
+        
+        DashboardRegistrationOverviewDto registrationOverview = DashboardRegistrationOverviewDto.builder()
+            .pending((int) pendingRegistrationsCount)
+            .approved((int) approved)
+            .rejected((int) rejected)
+            .waitlisted((int) waitlisted)
+            .build();
+            
+        DashboardPerformanceDto performance = DashboardPerformanceDto.builder()
+            .tournamentsCompleted(0).totalParticipants(0).averageRegistration(0).tournamentCompletion(0).build();
+
+        return DashboardDataDto.builder()
+                .stats(stats)
+                .activeTournaments(activeTournaments)
+                .nextTournament(nextTournament)
+                .actionRequired(List.of())
+                .upcomingSchedule(List.of())
+                .registrationOverview(registrationOverview)
+                .performance(performance)
+                .activity(List.of())
+                .build();
     }
 
     private OrgResponse mapToResponse(Organization org) {

@@ -13,7 +13,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,6 +28,7 @@ import java.util.Map;
 public class TournamentController {
 
     private final TournamentService tournamentService;
+    private final com.gameverse.modules.tournament.service.TournamentPdfExportService pdfExportService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<TournamentDto>> createTournament(
@@ -181,5 +185,34 @@ public class TournamentController {
                         )
                 )
         ));
+    }
+
+    @PatchMapping("/{tournamentId}/regenerate-master-code")
+    @PreAuthorize("@tournamentSecurity.hasRole(#tournamentId, 'tournament_dir')")
+    public ResponseEntity<ApiResponse<TournamentDto>> regenerateMasterCode(
+            @PathVariable String tournamentId) {
+        return ResponseEntity.ok(ApiResponse.success(tournamentService.regenerateMasterCode(tournamentId)));
+    }
+
+    @PostMapping("/join-via-code")
+    public ResponseEntity<ApiResponse<Void>> joinViaCode(
+            @RequestBody Map<String, String> body,
+            Authentication authentication) {
+        String code = body.get("code");
+        if (code == null) {
+            throw new IllegalArgumentException("Access code is required");
+        }
+        String userId = (String) authentication.getPrincipal();
+        tournamentService.joinViaCode(code, userId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @GetMapping("/{id}/export/pdf")
+    public ResponseEntity<byte[]> exportTournamentPdf(@PathVariable String id) {
+        byte[] pdfBytes = pdfExportService.generateTournamentReport(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "tournament-report-" + id + ".pdf");
+        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
     }
 }

@@ -9,10 +9,10 @@ import java.time.LocalDateTime;
 @Data
 public class PostponeTournamentRequest {
     @NotNull(message = "New start date is required")
-    private LocalDate newStartDate;
+    private LocalDateTime newStartDate;
     
     @NotNull(message = "New end date is required")
-    private LocalDate newEndDate;
+    private LocalDateTime newEndDate;
     
     private LocalDateTime newRegistrationOpen;
     private LocalDateTime newRegistrationClose;

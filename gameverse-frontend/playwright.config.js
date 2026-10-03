@@ -21,8 +21,22 @@ export default defineConfig({
   },
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'frontend',
+      testDir: './tests/frontend',
+      use: { 
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:5173',
+      },
+    },
+    {
+      name: 'backend',
+      testDir: './tests/backend',
+      use: {
+        baseURL: 'http://localhost:8081',
+        extraHTTPHeaders: {
+          'Accept': 'application/json',
+        }
+      },
     },
   ],
 });

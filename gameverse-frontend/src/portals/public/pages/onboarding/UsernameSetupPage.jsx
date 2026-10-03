@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { UsernameForm } from '../../../../features/onboarding/components/UsernameForm';
 import { AuthGuard } from '../../../../features/auth/components/AuthGuard';
-import { AuroraBackground } from '../../../../components/ui/aurora-background';
 import { useAuthStore } from '../../../../store/authStore';
 import logo from '../../../../assets/logo.png';
 
@@ -33,7 +32,7 @@ export function UsernameSetupPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <AuroraBackground>
+      <>
         <div className="min-h-screen w-full flex flex-col relative z-10 px-6 sm:px-12 py-8">
           
           {/* Header */}
@@ -69,7 +68,7 @@ export function UsernameSetupPage() {
             © {new Date().getFullYear()} Riftora Esports. All rights reserved.
           </footer>
         </div>
-      </AuroraBackground>
+      </>
     </AuthGuard>
   );
 }

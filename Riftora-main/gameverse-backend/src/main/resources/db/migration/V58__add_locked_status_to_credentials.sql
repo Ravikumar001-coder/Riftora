@@ -1,3 +1,0 @@
-ALTER TABLE room_credentials
-ADD COLUMN is_locked BOOLEAN DEFAULT FALSE,
-ADD COLUMN locked_at DATETIME;

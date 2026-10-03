@@ -10,6 +10,7 @@ import { TournamentPrizePreview } from '../components/tournament/TournamentPrize
 import { TournamentTeamsPreview } from '../components/tournament/TournamentTeamsPreview';
 import { TournamentSchedulePreview } from '../components/tournament/TournamentSchedulePreview';
 import { TournamentRulesPreview } from '../components/tournament/TournamentRulesPreview';
+import { TournamentRoadmapPreview } from '../components/tournament/TournamentRoadmapPreview';
 import { TournamentScheduleView } from '../components/tournament/schedule/TournamentScheduleView';
 import { TournamentLeaderboardView } from '../components/tournament/leaderboard/TournamentLeaderboardView';
 import { TournamentResultsView } from '../components/tournament/results/TournamentResultsView';
@@ -17,8 +18,6 @@ import { TournamentTeamsView } from '../components/tournament/teams/TournamentTe
 import { TournamentRulesView } from '../components/tournament/rules/TournamentRulesView';
 import { TournamentPrizesView } from '../components/tournament/prizes/TournamentPrizesView';
 import { TournamentWatchView } from '../components/tournament/watch/TournamentWatchView';
-import { AuroraBackground } from '../../../components/ui/aurora-background';
-
 export function TournamentOverviewPage() {
   const { tournamentSlug, tab } = useParams();
   const navigate = useNavigate();
@@ -39,17 +38,17 @@ export function TournamentOverviewPage() {
 
   if (isLoading) {
     return (
-      <AuroraBackground className="font-sans">
+      <>
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-12 h-12 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
   if (error || !tournament) {
     return (
-      <AuroraBackground className="font-sans">
+      <>
         <div className="flex flex-col items-center justify-center min-h-screen p-4">
           <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-6">
             <span className="text-2xl font-bold text-slate-400">!</span>
@@ -75,7 +74,7 @@ export function TournamentOverviewPage() {
             </Button>
           </div>
         </div>
-      </AuroraBackground>
+      </>
     );
   }
 
@@ -122,7 +121,7 @@ export function TournamentOverviewPage() {
 
   return (
     <div style={themeStyles} className={`min-h-screen ${tournament?.themeType === 'LIGHT' ? 'bg-white' : 'bg-[#071426]'}`}>
-      <AuroraBackground className="font-sans" style={{ background: tournament?.themeType === 'LIGHT' ? '#ffffff' : undefined }}>
+      <>
       <TournamentHero tournament={tournament} />
       
       <TournamentTabs 
@@ -147,6 +146,9 @@ export function TournamentOverviewPage() {
               
               {/* Quick Info */}
               <TournamentQuickInfo tournament={tournament} />
+              
+              {/* Roadmap */}
+              <TournamentRoadmapPreview tournament={tournament} />
               
               {/* Live Panel */}
               <TournamentLivePanel tournament={tournament} />
@@ -208,7 +210,7 @@ export function TournamentOverviewPage() {
           </div>
         )}
       </main>
-    </AuroraBackground>
+    </>
     </div>
   );
 }

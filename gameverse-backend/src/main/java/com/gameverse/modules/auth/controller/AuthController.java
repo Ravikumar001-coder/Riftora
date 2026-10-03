@@ -208,8 +208,7 @@ public class AuthController {
             org.springframework.security.core.Authentication authentication) {
         
         String userId = (String) authentication.getPrincipal();
-        authService.completeOnboarding(
-                userId, request.getUsername(), request.getDisplayName(), request.getOnboardingPath());
+        authService.completeOnboarding(userId, request);
         
         String redirectTo = request.getOnboardingPath().equals("organizer") ? "/admin" : "/player";
         

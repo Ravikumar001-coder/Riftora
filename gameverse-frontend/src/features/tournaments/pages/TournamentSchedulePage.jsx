@@ -6,11 +6,10 @@ import {
   ChevronDown, ChevronRight as ChevronRightIcon, Save, RefreshCcw,
   Users, Map, Shield, Trophy, Target, Settings, Eye, EyeOff, LayoutGrid, Loader2
 } from 'lucide-react';
-import { mockTournamentData } from '../data/mockTournamentOverview';
-import { mockBRSchedule } from '../data/mockSchedule';
 import { AutoScheduleModal } from '../components/AutoScheduleModal';
 import { SuggestTimesModal } from '../components/SuggestTimesModal';
 import { useAdminScheduleQueries } from '../api/useAdminScheduleQueries';
+import { useTournamentById } from '../api/useTournamentById';
 import LiveScheduleBoard from '../components/LiveScheduleBoard';
 import GroupManagementPanel from '../components/GroupManagementPanel';
 
@@ -22,51 +21,120 @@ export function TournamentSchedulePage() {
     delayMatch, isDelaying, handleNoShow, isHandlingNoShow 
   } = useAdminScheduleQueries(tournamentId);
 
-  // State
-  const [schedule, setSchedule] = useState(mockBRSchedule);
+  const { data: t, isLoading: isTournamentLoading } = useTournamentById(tournamentId);
+
+  // Component State
+  const [schedule, setSchedule] = useState({
+    format: '',
+    game: '',
+    teamSize: '',
+    capacity: 0,
+    lobbyCapacity: 16,
+    progression: 'Leaderboard Based',
+    status: 'Draft',
+    days: [],
+    groups: [],
+    metrics: { tournamentDays: 0, rounds: 0, totalLobbies: 0, matchesToPlay: 0, scheduled: 0, completed: 0 }
+  });
   const [activeTab, setActiveTab] = useState('schedule');
+  
+  // Populate from tournament data
+  const formatEnum = (str) => {
+    if (!str) return '';
+    return str.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
+
+  useEffect(() => {
+    if (t) {
+      setSchedule(prev => ({
+        ...prev,
+        format: formatEnum(t.format_type) || 'BATTLE ROYALE',
+        game: t.game_name || 'BGMI',
+        teamSize: t.max_team_size > 1 ? 'Squad' : 'Solo',
+        capacity: t.total_team_slots || 0,
+        status: t.status || 'Draft'
+      }));
+    }
+  }, [t]);
   
   useEffect(() => {
     if (matches && matches.length > 0) {
-      // Very basic transformation for now, assuming all matches are on the same day for demo
-      const day = {
-        id: 'd1',
-        date: matches[0].scheduledStart,
-        title: 'Auto-Generated Schedule',
-        isExpanded: true,
-        matches: matches.map(m => ({
-          id: m.matchId,
-          matchNumber: m.matchNumber,
-          scheduledAt: m.scheduledStart,
-          status: m.status,
-          lobby: { id: m.matchLabel, password: '', status: 'Pending' },
-          teamsAssigned: m.slots ? m.slots.filter(s => s.teamId != null).length : 0,
-          totalTeams: 16, // usually from tournament match setting
-          teams: m.slots ? m.slots.map(s => ({
-             id: s.teamId,
-             name: s.teamName,
-             slotNumber: s.slotNumber,
-             slotLabel: s.slotLabel
-          })) : [],
-          slots: m.slots ? m.slots.length : 16,
-          filledSlots: m.slots ? m.slots.filter(s => s.teamId != null).length : 0,
-          groups: ['GROUP A'] // Mock for now
-        }))
-      };
+      const matchesByDate = {};
+      matches.forEach(m => {
+        const dateObj = new Date(m.scheduledStart);
+        const dateStr = dateObj.toLocaleDateString('en-US');
+        if (!matchesByDate[dateStr]) matchesByDate[dateStr] = [];
+        matchesByDate[dateStr].push(m);
+      });
+
+      const days = Object.keys(matchesByDate).sort().map((dateStr, index) => {
+        const dayMatches = matchesByDate[dateStr];
+        return {
+          id: `day-${index + 1}`,
+          date: dayMatches[0].scheduledStart,
+          name: `Day ${index + 1} — ${index === Object.keys(matchesByDate).length - 1 ? 'Finals' : 'Qualifiers'}`,
+          isExpanded: true,
+          matches: dayMatches.map(m => ({
+            id: m.matchId,
+            matchNumber: m.matchNumber || 1,
+            scheduledAt: m.scheduledStart,
+            status: m.status || 'DRAFT',
+            lobby: { 
+               id: m.matchLabel || `Lobby ${m.matchNumber}`, 
+               password: '', 
+               status: m.status === 'DRAFT' ? 'Pending' : 'Ready', 
+               roomId: m.matchId.substring(0, 8), 
+               visibility: 'Private' 
+            },
+            teamsAssigned: m.slots ? m.slots.filter(s => s.teamId != null).length : 0,
+            totalTeams: t?.teams_per_match || 16, 
+            teams: m.slots ? m.slots.map(s => ({
+               id: s.teamId,
+               name: s.teamName || 'TBD',
+               slotNumber: s.slotNumber,
+               slotLabel: s.slotLabel
+            })) : [],
+            slots: m.slots ? m.slots.length : (t?.teams_per_match || 16),
+            filledSlots: m.slots ? m.slots.filter(s => s.teamId != null).length : 0,
+            groups: m.matchLabel ? [m.matchLabel] : (t?.groups || ['Main Stage']),
+            duration: '35m',
+            map: t?.map_pool && t.map_pool.length > 0 ? t.map_pool[0] : 'TBD',
+            mode: formatEnum(t?.format_type) || 'BATTLE ROYALE'
+          })).sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))
+        };
+      });
+
       setSchedule(prev => ({
         ...prev,
         metrics: {
-          tournamentDays: 1,
-          rounds: Math.max(...matches.map(m => m.roundNumber)),
+          tournamentDays: days.length,
+          rounds: Math.max(...matches.map(m => m.roundNumber || 1)),
           totalLobbies: matches.length,
           matchesToPlay: matches.length,
           scheduled: matches.length,
-          completed: 0
+          completed: matches.filter(m => m.status === 'COMPLETED').length,
+          teams: t?.total_team_slots || prev.capacity || 0,
+          qualifiers: Math.floor((t?.total_team_slots || 0) / 2),
+          matchDuration: '35m'
         },
-        days: [day]
+        days: days
+      }));
+    } else {
+      setSchedule(prev => ({
+        ...prev,
+        days: [],
+        metrics: {
+          ...prev.metrics,
+          tournamentDays: 0,
+          rounds: t?.total_rounds || 0,
+          totalLobbies: 0,
+          scheduled: 0,
+          teams: t?.total_team_slots || 0,
+          qualifiers: Math.floor((t?.total_team_slots || 0) / 2)
+        }
       }));
     }
-  }, [matches]);
+  }, [matches, t]);
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
@@ -82,8 +150,6 @@ export function TournamentSchedulePage() {
   // DnD State
   const [draggedTeamId, setDraggedTeamId] = useState(null);
   const [draggedOverSlot, setDraggedOverSlot] = useState(null);
-
-  const t = mockTournamentData;
 
   // Track unsaved changes
   useEffect(() => {
@@ -174,7 +240,7 @@ export function TournamentSchedulePage() {
   };
 
   const handlePublish = async () => {
-    if (window.confirm("Are you sure you want to publish this schedule? Team Captains will be notified.")) {
+    if (window.confirm("Are you sure? This will notify 48 teams of their match times.")) {
       try {
         await publishSchedule();
         showToast("Schedule Published Successfully!");
@@ -277,10 +343,10 @@ export function TournamentSchedulePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-24 relative">
+    <div className="flex flex-col min-h-screen pb-24 relative overflow-x-hidden">
       
       {toastMessage && (
-        <div className="fixed top-4 right-4 z-50 animate-in fade-in slide-in-from-top-4">
+        <div className="fixed top-4 right-4 z-[100] animate-in fade-in slide-in-from-top-4">
           <div className="bg-slate-800 border border-slate-700 shadow-xl rounded-lg px-4 py-3 flex items-center gap-3">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
             <p className="text-white text-sm font-medium">{toastMessage}</p>
@@ -292,7 +358,7 @@ export function TournamentSchedulePage() {
       <nav className="flex items-center text-sm text-slate-500 font-medium mb-6 px-2 lg:px-0">
         <Link to="/dashboard/organizer" className="hover:text-white transition-colors">Organizations</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
-        <Link to={`/organizations/${orgSlug}/manage/overview`} className="hover:text-white transition-colors">{t.name}</Link>
+        <Link to={`/organizations/${orgSlug}/manage/overview`} className="hover:text-white transition-colors">{t?.name || 'Tournament'}</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
         <Link to={`/manage/${tournamentId}/overview`} className="hover:text-white transition-colors">Tournaments</Link>
         <ChevronRight className="w-4 h-4 mx-2" />
@@ -307,7 +373,7 @@ export function TournamentSchedulePage() {
           </div>
           <p className="text-slate-400">Build tournament days, rounds, lobbies, maps, groups, and match rotations.</p>
           <div className="flex items-center gap-3 mt-4 text-sm font-medium">
-            <span className="text-white bg-slate-800 px-2 py-1 rounded">{t.name}</span>
+            <span className="text-white bg-slate-800 px-2 py-1 rounded">{t?.name || 'Loading...'}</span>
             <span className="text-blue-400 bg-blue-500/10 px-2 py-1 rounded">{schedule.game}</span>
             <span className="text-blue-400 bg-blue-500/10 px-2 py-1 rounded">{schedule.teamSize}</span>
             <span className="text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">{schedule.format}</span>
@@ -532,7 +598,7 @@ export function TournamentSchedulePage() {
                                       <Shield className="w-4 h-4 text-blue-400" />
                                       {match.lobby.id}
                                     </h5>
-                                    <p className="text-xs text-slate-500 mt-0.5">{match.groups.join(' + ')} • {match.slots} Teams • {match.slots * 4} Players</p>
+                                    <p className="text-xs text-slate-500 mt-0.5">{match.groups.join(' + ')} • {match.slots} Teams • {match.slots * (t?.max_team_size || 4)} Players</p>
                                   </div>
                                   <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${match.lobby.status === 'Ready' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
                                     {match.lobby.status}
@@ -569,7 +635,7 @@ export function TournamentSchedulePage() {
                                 <div className="flex flex-wrap gap-2">
                                   {match.groups.map(g => (
                                     <span key={g} className="px-3 py-1 bg-slate-800 border border-slate-700 rounded text-xs font-medium text-slate-300">
-                                      {g} — 8 Teams
+                                      {g} — {match.slots} Teams
                                     </span>
                                   ))}
                                 </div>
@@ -623,15 +689,15 @@ export function TournamentSchedulePage() {
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Team Size</p>
-                  <p className="text-sm text-slate-300">{schedule.teamSize} — 4</p>
+                  <p className="text-sm text-slate-300">{schedule.teamSize}{t?.max_team_size ? ` — ${t.max_team_size}` : ''}</p>
                 </div>
                 <div>
                   <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Lobby Capacity</p>
-                  <p className="text-sm text-slate-300">{schedule.lobbyCapacity} Teams</p>
+                  <p className="text-sm text-slate-300">{t?.teams_per_match || schedule.lobbyCapacity} Teams</p>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] text-slate-500 font-bold uppercase mb-1">Progression</p>
-                  <p className="text-sm text-blue-400 font-medium">{schedule.progression}</p>
+                  <p className="text-sm text-blue-400 font-medium">{t?.tournament_type === 'bracket' ? 'Knockout' : (t?.tournament_type === 'league' ? 'Points Based' : schedule.progression)}</p>
                 </div>
               </div>
             </div>

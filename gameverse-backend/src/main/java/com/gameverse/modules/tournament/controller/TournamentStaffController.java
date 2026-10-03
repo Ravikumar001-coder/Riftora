@@ -44,6 +44,11 @@ public class TournamentStaffController {
             dto.setStaffRole(s.getStaffRole().name());
             dto.setIsActive(s.getIsActive());
             dto.setAssignedAt(s.getAssignedAt());
+            if (s.getResponsibilities() != null && !s.getResponsibilities().isEmpty()) {
+                dto.setResponsibilities(java.util.Arrays.asList(s.getResponsibilities().split(",")));
+            } else {
+                dto.setResponsibilities(new java.util.ArrayList<>());
+            }
             return dto;
         }).collect(Collectors.toList());
 
@@ -51,7 +56,7 @@ public class TournamentStaffController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('tournament_director') or hasRole('org_owner') or hasRole('org_admin')")
+    @PreAuthorize("@tournamentSecurity.hasRole(#tournamentId, 'tournament_dir')")
     @Transactional
     public ResponseEntity<TournamentStaffDto> assignStaff(
             @PathVariable String tournamentId,
@@ -80,6 +85,12 @@ public class TournamentStaffController {
             staff.setStaffRole(role);
         }
         
+        if (request.getResponsibilities() != null && !request.getResponsibilities().isEmpty()) {
+            staff.setResponsibilities(String.join(",", request.getResponsibilities()));
+        } else {
+            staff.setResponsibilities("");
+        }
+
         staff = staffRepository.save(staff);
         
         TournamentStaffDto dto = new TournamentStaffDto();
@@ -89,12 +100,13 @@ public class TournamentStaffController {
         dto.setStaffRole(staff.getStaffRole().name());
         dto.setIsActive(staff.getIsActive());
         dto.setAssignedAt(staff.getAssignedAt());
+        dto.setResponsibilities(request.getResponsibilities());
         
         return ResponseEntity.ok(dto);
     }
 
     @DeleteMapping("/{staffId}")
-    @PreAuthorize("hasRole('tournament_director') or hasRole('org_owner') or hasRole('org_admin')")
+    @PreAuthorize("@tournamentSecurity.hasRole(#tournamentId, 'tournament_dir')")
     @Transactional
     public ResponseEntity<Void> removeStaff(
             @PathVariable String tournamentId,
@@ -109,7 +121,7 @@ public class TournamentStaffController {
     }
 
     @GetMapping("/{staffId}/logs")
-    @PreAuthorize("hasRole('tournament_director') or hasRole('org_owner') or hasRole('org_admin') or principal == #staffId")
+    @PreAuthorize("@tournamentSecurity.hasRole(#tournamentId, 'tournament_dir') or principal == #staffId")
     @Transactional(readOnly = true)
     public ResponseEntity<Page<StaffActivityLogDto>> getStaffLogs(
             @PathVariable String tournamentId,

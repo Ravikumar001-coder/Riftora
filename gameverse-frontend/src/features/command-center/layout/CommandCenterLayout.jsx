@@ -105,7 +105,7 @@ export function CommandCenterLayout() {
   const unreadCount = allNotifications.filter(n => !n.dismissed).length;
 
   return (
-    <div className="min-h-screen bg-[#071426] flex flex-col">
+    <div className="h-screen overflow-hidden bg-transparent flex flex-col">
 
       {/* ── PERSISTENT STATUS BAR (FR-21-003) ──────────────────────────────── */}
       <header className="h-14 bg-[#0a1929] border-b border-slate-800/80 flex items-center px-4 gap-4 z-[100] shrink-0">

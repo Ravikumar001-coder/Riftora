@@ -8,10 +8,10 @@ import { VerificationModal } from './VerificationModal';
 export function ProfileTab({ user, onUpdateUser, onToast, setIsDirty }) {
   const [formData, setFormData] = useState({
     username: user?.username || '',
-    displayName: user?.displayName || '',
+    displayName: user?.display_name || user?.displayName || '',
     bio: user?.bio || '',
     location: user?.location || '',
-    avatar: user?.avatar || null,
+    avatar: user?.avatar_url || user?.avatarUrl || user?.avatar || null,
     socialProfiles: user?.socialProfiles || {}
   });
 
@@ -31,10 +31,10 @@ export function ProfileTab({ user, onUpdateUser, onToast, setIsDirty }) {
     // Check for dirty state
     const isChanged = 
       formData.username !== (user?.username || '') ||
-      formData.displayName !== (user?.displayName || '') ||
+      formData.displayName !== (user?.display_name || user?.displayName || '') ||
       formData.bio !== (user?.bio || '') ||
       formData.location !== (user?.location || '') ||
-      formData.avatar !== (user?.avatar || null) ||
+      formData.avatar !== (user?.avatar_url || user?.avatarUrl || user?.avatar || null) ||
       JSON.stringify(formData.socialProfiles) !== JSON.stringify(user?.socialProfiles || {});
       
     setIsDirty(isChanged);
@@ -432,10 +432,10 @@ export function ProfileTab({ user, onUpdateUser, onToast, setIsDirty }) {
             // Reset to user data
             setFormData({
               username: user?.username || '',
-              displayName: user?.displayName || '',
+              displayName: user?.display_name || user?.displayName || '',
               bio: user?.bio || '',
               location: user?.location || '',
-              avatar: user?.avatar || null,
+              avatar: user?.avatar_url || user?.avatarUrl || user?.avatar || null,
               socialProfiles: user?.socialProfiles || {}
             });
             setIsDirty(false);

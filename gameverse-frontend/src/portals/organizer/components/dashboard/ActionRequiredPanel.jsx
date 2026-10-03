@@ -35,7 +35,7 @@ export function ActionRequiredPanel({ items }) {
         </span>
       </div>
       
-      <div className="flex-1 p-5 sm:p-6 flex flex-col gap-4 overflow-y-auto max-h-[400px]">
+      <div className="flex-1 p-5 sm:p-6 flex flex-col gap-4">
         {items.map((item) => {
           const config = getPriorityConfig(item.priority);
           const Icon = config.icon;

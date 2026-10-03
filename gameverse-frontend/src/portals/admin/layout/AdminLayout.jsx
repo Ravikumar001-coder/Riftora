@@ -16,7 +16,7 @@ export function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-transparent flex flex-col md:flex-row">
       
       {/* Sidebar */}
       <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0">
@@ -63,7 +63,7 @@ export function AdminLayout() {
         </nav>
         
         <div className="p-4 border-t border-slate-800">
-           <div className="bg-slate-950 rounded-lg p-4 border border-slate-800 flex flex-col gap-3">
+           <div className="bg-transparent rounded-lg p-4 border border-slate-800 flex flex-col gap-3">
              <div className="flex items-center gap-3">
                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
                  {user?.username?.substring(0, 2).toUpperCase() || 'SA'}
@@ -81,7 +81,7 @@ export function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto bg-[#071426]">
+      <main className="flex-1 min-w-0 flex flex-col h-screen overflow-y-auto bg-transparent ">
         <div className="flex-1 max-w-[1600px] mx-auto w-full">
           <Outlet />
         </div>

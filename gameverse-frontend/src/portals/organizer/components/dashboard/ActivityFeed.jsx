@@ -5,7 +5,7 @@ import { Check, Zap, User, AlertTriangle, ChevronRight } from 'lucide-react';
 export function ActivityFeed({ activities }) {
   if (!activities || activities.length === 0) {
     return (
-      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center h-[340px] flex flex-col justify-center">
+      <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl p-6 text-center flex flex-col justify-center">
         <h3 className="text-lg font-bold text-slate-300 mb-2">No recent activity</h3>
         <p className="text-slate-500 text-sm">Tournament and organization activity will appear here.</p>
       </div>
@@ -33,7 +33,7 @@ export function ActivityFeed({ activities }) {
   };
 
   return (
-    <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden flex flex-col h-[340px]">
+    <div className="bg-slate-900/80 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden flex flex-col">
       <div className="p-5 sm:p-6 border-b border-slate-800/60 flex items-center justify-between shrink-0">
         <span className="text-sm font-bold text-slate-300 tracking-wider">RECENT ACTIVITY</span>
         <Link to="/notifications" className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
@@ -41,7 +41,7 @@ export function ActivityFeed({ activities }) {
         </Link>
       </div>
       
-      <div className="p-5 sm:p-6 flex-1 overflow-y-auto pr-2">
+      <div className="p-5 sm:p-6 flex-1 pr-2">
         <div className="flex flex-col gap-6">
           {activities.map((activity, index) => (
             <div key={activity.id} className="flex gap-4 relative">

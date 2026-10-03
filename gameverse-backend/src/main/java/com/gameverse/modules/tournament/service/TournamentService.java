@@ -1,6 +1,8 @@
 package com.gameverse.modules.tournament.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import com.gameverse.modules.auth.entity.User;
 import com.gameverse.modules.auth.repository.UserRepository;
@@ -18,6 +20,7 @@ import com.gameverse.modules.tournament.dto.ChangeTournamentStatusRequest;
 import com.gameverse.modules.tournament.dto.PostponeTournamentRequest;
 import com.gameverse.modules.tournament.dto.TournamentDto;
 import com.gameverse.modules.tournament.entity.Tournament;
+import com.gameverse.modules.tournament.entity.GameConfigurationTemplate;
 import com.gameverse.modules.tournament.entity.Tournament.TournamentStatus;
 import com.gameverse.modules.tournament.entity.PrizePosition;
 import com.gameverse.modules.tournament.entity.TournamentMessage;
@@ -44,6 +47,7 @@ public class TournamentService {
     private final OrganizationRepository orgRepository;
     private final GameRepository gameRepository;
     private final ScoringTemplateRepository scoringTemplateRepository;
+    private final com.gameverse.modules.tournament.repository.GameConfigurationTemplateRepository gameConfigurationTemplateRepository;
     private final UserRepository userRepository;
     private final RegistrationRepository registrationRepository;
     private final WebSocketEventPublisher eventPublisher;
@@ -97,7 +101,38 @@ public class TournamentService {
         tournament.setStartDate(request.getStartDate());
         tournament.setEndDate(request.getEndDate());
         
+        // Apply default required constraints
+        tournament.setMinTeamSize(request.getMinTeamSize() != null ? request.getMinTeamSize() : 1);
+        tournament.setMaxTeamSize(request.getMaxTeamSize() != null ? request.getMaxTeamSize() : 1);
+        tournament.setTeamsPerMatch(2);
+        tournament.setTotalTeamSlots(16);
+        tournament.setTotalRounds(1);
+        
+        // Default Dates for Registration
+        tournament.setRegistrationOpen(LocalDateTime.now());
+        tournament.setRegistrationClose(request.getStartDate() != null ? request.getStartDate() : LocalDateTime.now().plusDays(7));
+        
+        // Find a fallback scoring template since it's required by the DB
+        List<ScoringTemplate> defaultTemplates = scoringTemplateRepository.findByGame_GameIdAndIsSystemTemplateTrue(game.getGameId());
+        if (!defaultTemplates.isEmpty()) {
+            tournament.setScoringTemplate(defaultTemplates.get(0));
+        } else {
+            List<ScoringTemplate> allTemplates = scoringTemplateRepository.findAll();
+            if (!allTemplates.isEmpty()) {
+                tournament.setScoringTemplate(allTemplates.get(0));
+            } else {
+                ScoringTemplate newTemplate = new ScoringTemplate();
+                newTemplate.setGame(game);
+                newTemplate.setTemplateName("Default Scoring");
+                newTemplate.setSystemTemplate(true);
+                newTemplate.setKillPtsEach(BigDecimal.ONE);
+                newTemplate = scoringTemplateRepository.save(newTemplate);
+                tournament.setScoringTemplate(newTemplate);
+            }
+        }
+        
         tournament.setStatus(Tournament.TournamentStatus.draft);
+        tournament.setMasterAccessCode(generateAccessCode("ADMIN"));
         tournament = tournamentRepository.save(tournament);
 
         // Add creator as tournament director automatically
@@ -117,9 +152,18 @@ public class TournamentService {
 
         // Todo: Verify user has rights to edit this tournament
 
-        if (request.getName() != null) tournament.setName(request.getName());
-        if (request.getSlug() != null) tournament.setSlug(request.getSlug());
-        
+        if (request.getName() != null && !request.getName().trim().isEmpty()) {
+            tournament.setName(request.getName().trim());
+        }
+        if (request.getSlug() != null && !request.getSlug().trim().isEmpty()) {
+            String slugToSet = request.getSlug().trim();
+            tournamentRepository.findBySlug(slugToSet).ifPresent(existing -> {
+                if (!existing.getTournamentId().equals(tournamentId)) {
+                    throw new IllegalArgumentException("Slug must be unique");
+                }
+            });
+            tournament.setSlug(slugToSet);
+        }
         if (request.getThemeType() != null) tournament.setThemeType(request.getThemeType());
         if (request.getTournamentType() != null) tournament.setTournamentType(request.getTournamentType());
         if (request.getEditionNumber() != null) tournament.setEditionNumber(request.getEditionNumber());
@@ -139,18 +183,8 @@ public class TournamentService {
         boolean isLocked = tournament.getStatus() != TournamentStatus.draft && tournament.getStatus() != TournamentStatus.published;
 
         if (isLocked) {
-            if (request.getFormatType() != null && request.getFormatType() != tournament.getFormatType()) {
-                throw new IllegalStateException("Format Type cannot be changed after registration has opened.");
-            }
-            if (request.getTeamsPerMatch() != null && !request.getTeamsPerMatch().equals(tournament.getTeamsPerMatch())) {
-                throw new IllegalStateException("Teams Per Match cannot be changed after registration has opened.");
-            }
-            if (request.getTotalTeamSlots() != null && !request.getTotalTeamSlots().equals(tournament.getTotalTeamSlots())) {
-                throw new IllegalStateException("Total Teams Capacity cannot be changed after registration has opened.");
-            }
-            if (request.getScoringTemplateId() != null && (tournament.getScoringTemplate() == null || !request.getScoringTemplateId().equals(tournament.getScoringTemplate().getId()))) {
-                throw new IllegalStateException("Scoring System cannot be changed after registration has opened.");
-            }
+            // Restrictions removed as per user request to allow editing Total Teams Capacity and Match Format
+
             if (request.getEntryFee() != null && request.getEntryFee().compareTo(tournament.getEntryFee()) != 0) {
                 // Mock notification
                 System.out.println("Mock: Notifying registered teams about entry fee change for tournament: " + tournamentId);
@@ -163,20 +197,35 @@ public class TournamentService {
             tournament.setScoringTemplate(template);
         }
 
-        if (!isLocked && request.getFormatType() != null) tournament.setFormatType(request.getFormatType());
-        if (!isLocked && request.getTeamsPerMatch() != null) tournament.setTeamsPerMatch(request.getTeamsPerMatch());
-        if (!isLocked && request.getTotalTeamSlots() != null) tournament.setTotalTeamSlots(request.getTotalTeamSlots());
+        if (!isLocked && request.getGameConfigTemplateId() != null) {
+            GameConfigurationTemplate template = gameConfigurationTemplateRepository.findById(request.getGameConfigTemplateId())
+                    .orElseThrow(() -> new RuntimeException("Game Configuration Template not found"));
+            tournament.setGameConfigTemplate(template);
+        }
+
+        if (request.getFormatType() != null) tournament.setFormatType(request.getFormatType());
+        if (request.getTeamsPerMatch() != null) tournament.setTeamsPerMatch(request.getTeamsPerMatch());
+        tournament.setTotalTeamSlots(request.getTotalTeamSlots());
         
-        if (request.getTotalRounds() != null) tournament.setTotalRounds(request.getTotalRounds());
-        if (request.getMatchesPerRound() != null) tournament.setMatchesPerRound(request.getMatchesPerRound());
+        tournament.setTotalRounds(request.getTotalRounds());
+        tournament.setMatchesPerRound(request.getMatchesPerRound());
         if (request.getMapPool() != null) tournament.setMapPool(request.getMapPool());
+        if (request.getTiebreakerRules() != null) {
+            try {
+                Tournament.TiebreakerRule rule = Tournament.TiebreakerRule.valueOf(request.getTiebreakerRules().toUpperCase());
+                tournament.setTiebreakerSequence(List.of(rule));
+            } catch (Exception e) {
+                // Ignore invalid rule
+            }
+        }
 
         if (request.getStartDate() != null) tournament.setStartDate(request.getStartDate());
         if (request.getEndDate() != null) tournament.setEndDate(request.getEndDate());
+        if (request.getScheduledPublishDate() != null) tournament.setScheduledPublishDate(request.getScheduledPublishDate());
         if (request.getRegistrationOpen() != null) tournament.setRegistrationOpen(request.getRegistrationOpen());
         if (request.getRegistrationClose() != null) tournament.setRegistrationClose(request.getRegistrationClose());
 
-        if (request.getEntryFee() != null) tournament.setEntryFee(request.getEntryFee());
+        tournament.setEntryFee(request.getEntryFee());
         if (request.getPaymentMethods() != null) tournament.setPaymentMethods(request.getPaymentMethods());
         if (request.getMinTeamSize() != null) tournament.setMinTeamSize(request.getMinTeamSize());
         if (request.getMaxTeamSize() != null) tournament.setMaxTeamSize(request.getMaxTeamSize());
@@ -305,12 +354,12 @@ public class TournamentService {
                 throw new TournamentTransitionException("Cannot cancel a tournament that is already completed or cancelled.");
             }
             tournament.setCancellationReason(request.getCancellationReason());
-            // Mock: notify all registered teams via in-app notification, email, SMS
+            // TODO: In a real implementation, we would query the RegistrationRepository and notify each team.
+            // But since RegistrationService and RegistrationRepository are separate, we fire an event or notify.
             System.out.println("Mock: Notifying all teams of cancellation for tournament: " + tournamentId);
-            // Mock: trigger automatic refunds for paid entry fees
             System.out.println("Mock: Refunding entry fees for tournament: " + tournamentId);
         } else if (current == TournamentStatus.draft && target == TournamentStatus.published) {
-            // allowed
+            tournament.setPublishedAt(LocalDateTime.now());
         } else if (current == TournamentStatus.published && target == TournamentStatus.registration_open) {
             // allowed
         } else if (current == TournamentStatus.registration_open && target == TournamentStatus.registration_closed) {
@@ -608,6 +657,37 @@ public class TournamentService {
         return mapToDto(tournament);
     }
 
+    @Transactional
+    public TournamentDto regenerateMasterCode(String tournamentId) {
+        Tournament tournament = tournamentRepository.findById(tournamentId)
+                .orElseThrow(() -> new RuntimeException("Tournament not found"));
+        
+        tournament.setMasterAccessCode(generateAccessCode("ADMIN"));
+        return mapToDto(tournamentRepository.save(tournament));
+    }
+
+    @Transactional
+    public void joinViaCode(String code, String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Tournament tournament = tournamentRepository.findByMasterAccessCode(code)
+                .orElseThrow(() -> new RuntimeException("Invalid access code"));
+                
+        final TournamentStaff.StaffRole finalRole = TournamentStaff.StaffRole.tournament_dir;
+
+        boolean alreadyStaff = staffRepository.findByTournament_TournamentId(tournament.getTournamentId())
+                .stream().anyMatch(s -> s.getUser().getUserId().equals(userId) && s.getStaffRole() == finalRole);
+                
+        if (!alreadyStaff) {
+            TournamentStaff staff = new TournamentStaff();
+            staff.setTournament(tournament);
+            staff.setUser(user);
+            staff.setStaffRole(finalRole);
+            staffRepository.save(staff);
+        }
+    }
+
     private TournamentDto mapToDto(Tournament t) {
         long currentConfirmed = 0;
         boolean isFull = false;
@@ -623,6 +703,7 @@ public class TournamentService {
                 .tournamentId(t.getTournamentId())
                 .orgId(t.getOrganization().getOrgId())
                 .gameId(t.getGame().getGameId())
+                .gameName(t.getGame().getGameName())
                 .scoringTemplateId(t.getScoringTemplate() != null ? t.getScoringTemplate().getId() : null)
                 .createdByUserId(t.getCreatedBy().getUserId())
                 .name(t.getName())
@@ -649,6 +730,7 @@ public class TournamentService {
                 .totalRounds(t.getTotalRounds())
                 .matchesPerRound(t.getMatchesPerRound())
                 .mapPool(t.getMapPool())
+                .tiebreakerRules(t.getTiebreakerSequence() != null && !t.getTiebreakerSequence().isEmpty() ? t.getTiebreakerSequence().get(0).name().toLowerCase() : "head_to_head")
                 .startDate(t.getStartDate())
                 .endDate(t.getEndDate())
                 .registrationOpen(t.getRegistrationOpen())
@@ -667,8 +749,10 @@ public class TournamentService {
                 .prizePoolTotal(t.getPrizePoolTotal())
                 .prizeCurrency(t.getPrizeCurrency())
                 .prizeFundedBy(t.getPrizeFundedBy())
+                .masterAccessCode(t.getMasterAccessCode())
                 .status(t.getStatus())
                 .publishedAt(t.getPublishedAt())
+                .scheduledPublishDate(t.getScheduledPublishDate())
                 .completedAt(t.getCompletedAt())
                 .streamUrl(t.getStreamUrl())
                 .streamPlatform(t.getStreamPlatform())
@@ -685,6 +769,17 @@ public class TournamentService {
                     dto.setCategory(p.getCategory());
                     return dto;
                 }).toList() : null)
+                .masterAccessCode(t.getMasterAccessCode())
                 .build();
+    }
+
+    private String generateAccessCode(String prefix) {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        StringBuilder sb = new StringBuilder(prefix + "-");
+        java.util.Random rnd = new java.util.Random();
+        for (int i = 0; i < 6; i++) {
+            sb.append(chars.charAt(rnd.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 }

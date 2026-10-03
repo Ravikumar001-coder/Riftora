@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useOutletContext } from 'react-router-dom';
 import { 
   Users, Search, Filter, MoreVertical, 
   ShieldAlert, Edit, Trash2, ChevronLeft, ChevronRight,
@@ -45,10 +45,24 @@ const getRoleLevel = (role) => {
 
 export function OrganizationMembersPage() {
   const { orgSlug } = useParams();
+  const { orgId } = useOutletContext();
   const { user } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  const { data: members = [], isLoading } = useOrganizationMembersQuery(orgSlug);
+  const { data: rawMembers = [], isLoading } = useOrganizationMembersQuery(orgId);
+
+  const members = useMemo(() => {
+    return rawMembers.map(m => ({
+      ...m,
+      id: m.id || m.userId || m.user_id,
+      userId: m.user_id ?? m.userId,
+      displayName: m.display_name ?? m.displayName ?? 'Unknown',
+      customRoleName: m.custom_role_name ?? m.customRoleName,
+      joinedAt: m.joined_at ?? m.joinedAt,
+      lastActiveAt: m.last_active_at ?? m.lastActiveAt,
+      avatarUrl: m.avatar_url ?? m.avatarUrl,
+    }));
+  }, [rawMembers]);
   
   // Modals state
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -127,7 +141,7 @@ export function OrganizationMembersPage() {
     if (selectedMember) {
       try {
         await updateMemberRole.mutateAsync({
-          orgId: orgSlug,
+          orgId: orgId, // Use UUID instead of slug for API call
           userId: selectedMember.id,
           role: newRole.toLowerCase().replace(' ', '_'),
           customRoleName: newCustomRole || null
@@ -150,7 +164,7 @@ export function OrganizationMembersPage() {
     if (selectedMember) {
       try {
         await removeMember.mutateAsync({
-          orgId: orgSlug,
+          orgId: orgId, // Use UUID instead of slug for API call
           userId: selectedMember.id
         });
       } catch (error) {
@@ -163,7 +177,7 @@ export function OrganizationMembersPage() {
 
   const handleConfirmLeave = async () => {
     try {
-      await leaveOrganization.mutateAsync(orgSlug);
+      await leaveOrganization.mutateAsync(orgId); // Use UUID instead of slug
       window.location.href = '/dashboard/organizer'; // Redirect after leaving
     } catch (error) {
       console.error(error);
@@ -677,14 +691,14 @@ export function OrganizationMembersPage() {
       <InviteModal 
         isOpen={isInviteModalOpen} 
         onClose={() => setIsInviteModalOpen(false)} 
-        orgId={orgSlug} 
+        orgId={orgId} 
       />
 
       {/* Audit Drawer */}
       <OrganizationAuditDrawer 
         isOpen={isAuditDrawerOpen} 
         onClose={() => setIsAuditDrawerOpen(false)} 
-        orgId={orgSlug} 
+        orgId={orgId} 
       />
 
       {/* Role Change Modal */}
