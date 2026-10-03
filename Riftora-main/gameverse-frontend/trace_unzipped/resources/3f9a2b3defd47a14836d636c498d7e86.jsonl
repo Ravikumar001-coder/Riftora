@@ -1,0 +1,4 @@
+{"type":"receive","time":1790503826407.68,"opcode":1,"data":"o"}
+{"type":"send","time":1790503826409.019,"opcode":1,"data":"[\"CONNECT\\nAuthorization:Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1c2VySWQiOiIxNTdjc2VyYXZpa3VtYXJfNTMxIiwic3ViIjoiMTU3Y3NlcmF2aWt1bWFyXzUzMSIsImlhdCI6MTc5MDUwMzgyNCwiZXhwIjoxNzkwNTA0NzI0fQ.nDqEPjECQBK8Ym_ZR73vb7vcVw0P3BJ_r7CCfJnr238\\naccept-version:1.2,1.1,1.0\\nheart-beat:4000,4000\\n\\n\\u0000\"]"}
+{"type":"receive","time":1790503826415.158,"opcode":1,"data":"a[\"CONNECTED\\nversion:1.2\\nheart-beat:0,0\\n\\n\\u0000\"]"}
+{"type":"send","time":1790503826417.131,"opcode":1,"data":"[\"SUBSCRIBE\\nid:sub-0\\ndestination:/user/queue/notifications\\n\\n\\u0000\"]"}

@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: riftora-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: riftora_esports
+      MYSQL_USER: riftora
+      MYSQL_PASSWORD: riftorapassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    container_name: riftora-redis
+    ports:
+      - "6379:6379"
+
+  spring-boot:
+    image: eclipse-temurin:21-jdk-alpine
+    container_name: riftora-spring-monolith
+    depends_on:
+      - mysql
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/riftora_esports?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: riftora
+      SPRING_DATASOURCE_PASSWORD: riftorapassword
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      VISION_WORKER_SECRET: prod_worker_secret_9941a8
+
+  vision-worker:
+    build: .
+    container_name: riftora-vision-worker
+    depends_on:
+      - spring-boot
+      - redis
+    ports:
+      - "8090:8090"
+    environment:
+      VISION_WORKER_ID: worker_node_blr_01
+      VISION_WORKER_SECRET: prod_worker_secret_9941a8
+      BACKEND_BASE_URL: http://spring-boot:8080
+      OCR_ENGINE: tesseract
+      VISION_DEVICE: auto
+      FRAME_SAMPLE_FPS: 10
+      MAX_FRAME_QUEUE: 3
+      EVENT_CONFIDENCE_THRESHOLD: 0.90
+      REVIEW_CONFIDENCE_THRESHOLD: 0.70
+
+volumes:
+  mysql_data:

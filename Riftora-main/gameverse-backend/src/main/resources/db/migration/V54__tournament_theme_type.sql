@@ -1,0 +1,2 @@
+ALTER TABLE tournaments
+ADD COLUMN theme_type VARCHAR(20) DEFAULT 'USE_ORG';
